@@ -6,7 +6,7 @@ dist/
 .next/
 __pycache__/
 *.zip
-assets/**/balmain*
+assets/**/*balmain*
 assets/innova*
 alfred-kerbs/source/**/innova*
 silhouette/innova*
