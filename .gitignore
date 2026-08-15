@@ -8,3 +8,4 @@ __pycache__/
 *.zip
 assets/*balmain*
 assets/innova*
+alfred-kerbs/source/**/innova*
