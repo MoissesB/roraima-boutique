@@ -2,19 +2,19 @@
   const local = /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
   // La revisión queda completamente aislada: no carga catálogos ni recursos
   // desde propiedades públicas de terceros ni desde el origen de Innova.
-  const alfredLocalUrl = `${window.location.origin}/alfred-kerbs/`;
+  const alfredPublicUrl = "https://roraima-alfred-kerbs.moisses.chatgpt.site/";
   const silhouetteLocalUrl = `${window.location.origin}/silhouette/`;
   window.RORAIMA_CATALOG_CONFIG = {
     local,
     maintenanceMode: false,
     portalUrl: window.location.origin,
-    allowedOrigins: [window.location.origin],
+    allowedOrigins: [window.location.origin, new URL(alfredPublicUrl).origin],
     brands: {
       "alfred-kerbs": "/alfred-kerbs/",
       silhouette: "/silhouette/",
     },
     brandAssets: {
-      "alfred-kerbs": alfredLocalUrl,
+      "alfred-kerbs": alfredPublicUrl,
       silhouette: silhouetteLocalUrl,
     },
   };
