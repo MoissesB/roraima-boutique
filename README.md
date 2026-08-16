@@ -1,7 +1,7 @@
 # Roraima Distribuciones
 
-Versión de publicación sin Balmain del portal profesional de Roraima Distribuciones.
+Versión de publicación del portal profesional de Roraima Distribuciones.
 
-Incluye el inicio de Roraima y los catálogos de Alfred Kerbs y Silhouette. Balmain no forma parte de esta versión pública.
+Incluye el inicio de Roraima y los catálogos activos de Alfred Kerbs y Silhouette.
 
 Dominio previsto: `roraimamx.net`.

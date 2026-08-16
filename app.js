@@ -69,7 +69,7 @@
     }, { once: true });
   });
 
-  const showcaseProducts = window.RORAIMA_SHOWCASE_PRODUCTS?.brands || window.INNOVA_SHOWCASE_PRODUCTS?.brands || {};
+  const showcaseProducts = window.RORAIMA_SHOWCASE_PRODUCTS?.brands || {};
   const escapeAttribute = (value) => escapeHtml(value).replaceAll("`", "&#96;");
 
   document.querySelectorAll("[data-product-carousel]").forEach((carousel) => {
