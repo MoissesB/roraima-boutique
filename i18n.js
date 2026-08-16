@@ -8,7 +8,7 @@
   const en = {
     "Roraima Distribuciones · Luxury Eyewear Portfolio": "Roraima Distribuciones · Luxury Eyewear Portfolio",
     "RORAIMA DISTRIBUCIONES · DISTRIBUCIÓN PROFESIONAL DE MARCAS DE LUJO": "RORAIMA DISTRIBUCIONES · PROFESSIONAL DISTRIBUTION OF LUXURY BRANDS",
-    "Boutique": "Boutique",
+    "Inicio": "Home",
     "Marcas y colecciones": "Brands and collections",
     "Óptica": "Optical",
     "Sol": "Sun",

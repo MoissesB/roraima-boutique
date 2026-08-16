@@ -3,19 +3,22 @@
   // La revisión queda completamente aislada: no carga catálogos ni recursos
   // desde propiedades públicas de terceros ni desde el origen de Innova.
   const alfredPublicUrl = "https://roraima-alfred-kerbs.moisses.chatgpt.site/";
-  const silhouetteLocalUrl = `${window.location.origin}/silhouette/`;
+  const portalUrl = local
+    ? window.location.origin
+    : "https://moissesb.github.io/roraima-boutique";
+  const silhouettePublicUrl = `${portalUrl}/silhouette/`;
   window.RORAIMA_CATALOG_CONFIG = {
     local,
     maintenanceMode: false,
-    portalUrl: window.location.origin,
-    allowedOrigins: [window.location.origin, new URL(alfredPublicUrl).origin],
+    portalUrl,
+    allowedOrigins: [new URL(portalUrl).origin, new URL(alfredPublicUrl).origin],
     brands: {
-      "alfred-kerbs": "/alfred-kerbs/",
-      silhouette: "/silhouette/",
+      "alfred-kerbs": alfredPublicUrl,
+      silhouette: silhouettePublicUrl,
     },
     brandAssets: {
       "alfred-kerbs": alfredPublicUrl,
-      silhouette: silhouetteLocalUrl,
+      silhouette: silhouettePublicUrl,
     },
   };
 })();
