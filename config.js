@@ -7,6 +7,7 @@
     ? window.location.origin
     : "https://moissesb.github.io/roraima-boutique";
   const silhouettePublicUrl = `${portalUrl}/silhouette/`;
+  const silhouetteCatalogUrl = `${silhouettePublicUrl}#/catalogo`;
   window.RORAIMA_CATALOG_CONFIG = {
     local,
     maintenanceMode: false,
@@ -14,7 +15,7 @@
     allowedOrigins: [new URL(portalUrl).origin, new URL(alfredPublicUrl).origin],
     brands: {
       "alfred-kerbs": alfredPublicUrl,
-      silhouette: silhouettePublicUrl,
+      silhouette: silhouetteCatalogUrl,
     },
     brandAssets: {
       "alfred-kerbs": alfredPublicUrl,
