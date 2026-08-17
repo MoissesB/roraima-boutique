@@ -1,0 +1,7 @@
+.product-card__viewer.is-rotating {
+  cursor: grabbing;
+}
+
+.product-card__viewer.is-rotating img {
+  transform: scale(1.08);
+}
