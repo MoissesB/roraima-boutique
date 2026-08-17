@@ -5,7 +5,9 @@
   const alfredPublicUrl = "https://roraima-alfred-kerbs.moisses.chatgpt.site/";
   const portalUrl = local
     ? window.location.origin
-    : "https://moissesb.github.io/roraima-boutique";
+    : window.location.hostname.endsWith(".github.io")
+      ? `${window.location.origin}/roraima-boutique`
+      : window.location.origin;
   const silhouettePublicUrl = `${portalUrl}/silhouette/`;
   window.RORAIMA_CATALOG_CONFIG = {
     local,
