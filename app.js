@@ -46,7 +46,10 @@
   }
 
   function brandRouteDestination(brand, path = "") {
-    if (["alfred-kerbs", "silhouette"].includes(brand)) {
+    if (brand === "alfred-kerbs") {
+      return brandDestination(brand, path);
+    }
+    if (brand === "silhouette") {
       const base = brandDestination(brand);
       const route = String(path).replace(/^\/+/, "");
       return `${base.replace(/\/+$/, "/")}#/${route}`;
