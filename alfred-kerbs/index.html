@@ -3,30 +3,47 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Catalogo profesional Alfred Kerbs distribuido por Roraima Mexico.">
+  <meta name="description" content="Catálogo profesional Alfred Kerbs distribuido por Roraima Distribuciones en México.">
+  <meta name="theme-color" content="#111214">
   <link rel="icon" type="image/png" sizes="16x16" href="../assets/roraima-favicon-16.png">
   <link rel="icon" type="image/png" sizes="32x32" href="../assets/roraima-favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="../assets/roraima-favicon-192.png">
   <link rel="shortcut icon" href="../assets/favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="../assets/apple-touch-icon.png">
-  <title>Alfred Kerbs · Roraima Mexico</title>
-  <link rel="stylesheet" href="../brand-frame.css">
+  <title>Alfred Kerbs · Roraima Distribuciones</title>
+  <link rel="stylesheet" href="./catalog-app.css">
 </head>
-<body data-brand="alfred-kerbs" data-source="https://roraima-alfred-kerbs.moisses.chatgpt.site/">
-  <div class="brand-loader" data-brand-loader>
+<body>
+  <a class="skip-link" href="#catalog-app">Saltar al catálogo</a>
+  <header class="site-header">
+    <a class="roraima-lockup" href="../#inicio" aria-label="Ir al inicio de Roraima Distribuciones">
+      <img src="../assets/roraima-favicon-192.png" alt="">
+      <span>Roraima Distribuciones</span>
+    </a>
+    <nav aria-label="Navegación Alfred Kerbs">
+      <a href="#/">Alfred Kerbs</a>
+      <a href="#/catalogo?category=optical">Óptica</a>
+      <a href="#/catalogo?category=sun">Sol</a>
+      <a href="#/catalogo">Catálogo</a>
+      <a href="../silhouette/">Silhouette</a>
+    </nav>
+    <a class="order-link" href="../#seleccion">Pedido global</a>
+  </header>
+  <main id="catalog-app" tabindex="-1" aria-live="polite">
+    <div class="catalog-loading">Cargando colección Alfred Kerbs…</div>
+  </main>
+  <footer class="site-footer">
     <div>
       <strong>Alfred Kerbs</strong>
-      <span aria-hidden="true"></span>
-      <a class="brand-fallback" href="https://roraima-alfred-kerbs.moisses.chatgpt.site/">Abrir catalogo</a>
+      <span>Distribución profesional por Roraima Distribuciones</span>
     </div>
-  </div>
-  <iframe
-    class="brand-frame"
-    data-brand-frame
-    title="Catalogo profesional Alfred Kerbs"
-    allow="camera; microphone; fullscreen; clipboard-read; clipboard-write"
-    allowfullscreen
-  ></iframe>
-  <script src="../brand-frame.js"></script>
+    <div class="footer-links">
+      <a href="../#inicio">Roraima Distribuciones</a>
+      <a href="../silhouette/">Silhouette</a>
+      <a href="mailto:ventas@roraimamx.net">ventas@roraimamx.net</a>
+      <a href="https://wa.me/5215610084344" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+    </div>
+  </footer>
+  <script src="./catalog-app.js" defer></script>
 </body>
 </html>
