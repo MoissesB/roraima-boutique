@@ -75,7 +75,7 @@ img { display: block; width: 100%; }
   font-weight: 700;
   letter-spacing: .2em;
 }
-.maintenance-copy h1 {
+.maintenance-copy h2 {
   max-width: 690px;
   margin: 0;
   font-size: clamp(54px, 6.1vw, 112px);
@@ -170,7 +170,7 @@ img { display: block; width: 100%; }
   .maintenance-header > span { font-size: 7px; letter-spacing: .11em; }
   .maintenance-copy { min-height: auto; padding: 64px 20px 56px; }
   .maintenance-eyebrow { margin-bottom: 34px; font-size: 7px; }
-  .maintenance-copy h1 { font-size: clamp(50px, 15.5vw, 70px); }
+  .maintenance-copy h2 { font-size: clamp(50px, 15.5vw, 70px); }
   .maintenance-copy > p { margin-top: 30px; font-size: 15px; }
   .maintenance-status { margin-top: 42px; flex-direction: column; gap: 13px; }
   .maintenance-gallery { min-height: 360px; grid-template-columns: 1.2fr .9fr; }
