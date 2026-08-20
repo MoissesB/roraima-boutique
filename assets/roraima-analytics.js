@@ -53,15 +53,15 @@
   window.gtag("config", measurementId);
 
   var lastTrackedLocation = window.location.href;
-  var hashPageViewScheduled = false;
+  var routePageViewScheduled = false;
 
-  window.addEventListener("hashchange", function () {
-    if (hashPageViewScheduled) {
+  function scheduleRoutePageView() {
+    if (routePageViewScheduled) {
       return;
     }
-    hashPageViewScheduled = true;
+    routePageViewScheduled = true;
     window.setTimeout(function () {
-      hashPageViewScheduled = false;
+      routePageViewScheduled = false;
       var currentLocation = window.location.href;
       if (currentLocation === lastTrackedLocation) {
         return;
@@ -74,7 +74,19 @@
         page_referrer: previousLocation
       });
     }, 0);
+  }
+
+  ["pushState", "replaceState"].forEach(function (methodName) {
+    var originalMethod = window.history[methodName];
+    window.history[methodName] = function () {
+      var result = originalMethod.apply(this, arguments);
+      scheduleRoutePageView();
+      return result;
+    };
   });
+
+  window.addEventListener("popstate", scheduleRoutePageView);
+  window.addEventListener("hashchange", scheduleRoutePageView);
 
   var googleTag = document.createElement("script");
   googleTag.async = true;
