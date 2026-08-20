@@ -125,6 +125,24 @@
     }
   }
 
+  function productSlugFromUrl(value) {
+    try {
+      const url = new URL(value || window.location.href, window.location.href);
+      return `${url.pathname}${url.hash}`.match(/(?:\/|#\/)producto\/([a-z0-9-]+)/i)?.[1]?.toLowerCase() || "";
+    } catch {
+      return "";
+    }
+  }
+
+  function trackAudienceFormComplete(audience, productSlug = productSlugFromUrl(pendingUrl || window.location.href)) {
+    if (!productSlug || typeof window.__RORAIMA_TRACK_FORM_COMPLETE__ !== "function") return;
+    window.__RORAIMA_TRACK_FORM_COMPLETE__({
+      form_id: `silhouette_${audience}_product_gate`,
+      audience,
+      product_slug: productSlug
+    }, `silhouette:${audience}:${productSlug}`);
+  }
+
   function catalogUrl() {
     const url = new URL(window.location.href);
     if (PRODUCT_ROUTE.test(url.hash)) {
@@ -883,10 +901,13 @@
       const audience = form.dataset.formAudience;
       if (audience === "b2b") {
         renderB2BGuide();
+        window.requestAnimationFrame(() => trackAudienceFormComplete("b2b"));
         return;
       }
+      const productSlug = productSlugFromUrl(pendingUrl || window.location.href);
       writeGrant(audience);
       applyAudienceVisibility();
+      trackAudienceFormComplete("b2c", productSlug);
       continueToProduct();
     });
   }
