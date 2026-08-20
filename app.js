@@ -1004,6 +1004,11 @@
       link.click();
       link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1500);
+      window.__RORAIMA_TRACK_FORM_COMPLETE__?.({
+        form_id: "roraima_professional_order",
+        audience: "b2b",
+        product_slug: "multibrand-order-selection",
+      });
       status.textContent = "PDF descargado. Envíalo al equipo comercial de Roraima México.";
     } catch (error) {
       console.error("Roraima PDF generation failed", error);
