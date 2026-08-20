@@ -52,6 +52,30 @@
   window.gtag("js", new Date());
   window.gtag("config", measurementId);
 
+  var lastTrackedLocation = window.location.href;
+  var hashPageViewScheduled = false;
+
+  window.addEventListener("hashchange", function () {
+    if (hashPageViewScheduled) {
+      return;
+    }
+    hashPageViewScheduled = true;
+    window.setTimeout(function () {
+      hashPageViewScheduled = false;
+      var currentLocation = window.location.href;
+      if (currentLocation === lastTrackedLocation) {
+        return;
+      }
+      var previousLocation = lastTrackedLocation;
+      lastTrackedLocation = currentLocation;
+      window.gtag("event", "page_view", {
+        page_title: document.title,
+        page_location: currentLocation,
+        page_referrer: previousLocation
+      });
+    }, 0);
+  });
+
   var googleTag = document.createElement("script");
   googleTag.async = true;
   googleTag.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(measurementId);
