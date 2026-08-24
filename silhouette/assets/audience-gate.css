@@ -607,6 +607,39 @@ body.sil-audience-gate-open {
   line-height: 1.55;
 }
 
+.sil-audience-honeypot {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.sil-audience-submit-status {
+  margin: 14px 0 0;
+  padding: 11px 12px;
+  border: 1px solid #c7c7c7;
+  background: #f7f7f7;
+  color: var(--sil-gate-black);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.sil-audience-submit-status[data-state="error"] {
+  border-color: #9f1d1d;
+  background: #fff7f7;
+  color: #7f1616;
+}
+
+.sil-audience-button:disabled {
+  cursor: progress;
+  opacity: 0.62;
+}
+
 .sil-b2c-optician-button {
   width: 100%;
   min-height: 52px;
