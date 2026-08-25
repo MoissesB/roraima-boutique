@@ -763,8 +763,8 @@
     select.value = option.dataset.countryCode;
     listbox.querySelectorAll("[aria-selected='true']").forEach((item) => item.setAttribute("aria-selected", "false"));
     option.setAttribute("aria-selected", "true");
-    closeCountryList(input);
     input.focus();
+    closeCountryList(input);
   }
 
   function validateControlledCountry(form) {
