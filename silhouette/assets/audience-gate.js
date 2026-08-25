@@ -10,6 +10,8 @@
     b2c: "https://services.leadconnectorhq.com/hooks/fHXK54ukeNMjxEcZtyDv/webhook-trigger/31f025f4-614b-4fa9-b4ea-fdf155240900",
     b2b: "https://services.leadconnectorhq.com/hooks/fHXK54ukeNMjxEcZtyDv/webhook-trigger/0ca5bf0a-cdd5-4b9c-aef4-da244e4e3573"
   };
+  const ADS_B2B_CONVERSION_SEND_TO = "AW-18382327581/VWN9CJz_9t8cEJ2esL1E";
+  let adsB2bConversionSent = false;
   const PRODUCT_ROUTE = /(?:\/|#\/)producto\/[a-z0-9-]+/i;
   const B2B_BUTTON = /^(?:a[nñ]adir(?: m[aá]s unidades| al pedido)?|revisar mi pedido|contactar (?:con |un )?asesor|mi pedido)$/i;
 
@@ -407,6 +409,12 @@
   }
 
   function trackAudienceFormComplete(audience, productSlug = productSlugFromUrl(pendingUrl || window.location.href)) {
+    if (audience === "b2b" && !adsB2bConversionSent) {
+      adsB2bConversionSent = true;
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+      window.gtag("event", "conversion", { send_to: ADS_B2B_CONVERSION_SEND_TO });
+    }
     if (!productSlug || typeof window.__RORAIMA_TRACK_FORM_COMPLETE__ !== "function") return;
     window.__RORAIMA_TRACK_FORM_COMPLETE__({
       form_id: `silhouette_${audience}_product_gate`,
