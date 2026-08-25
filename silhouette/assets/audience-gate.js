@@ -1171,12 +1171,13 @@
   function ensureOpticianButton() {
     const existing = document.querySelector(".sil-b2c-optician-button");
     const isB2CProduct = readGrant()?.audience === "b2c" && isProductUrl(window.location.href);
+    const label = t("Encuentra tu óptica más cercana");
     if (!isB2CProduct) {
       existing?.remove();
       return;
     }
     if (existing) {
-      existing.textContent = t("Encuentra tu óptica más cercana");
+      if (existing.textContent !== label) existing.textContent = label;
       return;
     }
     const advisor = [...document.querySelectorAll("button, a")].find((element) => /^contactar (?:con |un )?asesor$/i.test(normalizeText(element.textContent)));
@@ -1184,7 +1185,7 @@
     const button = document.createElement("button");
     button.type = "button";
     button.className = "sil-b2c-optician-button";
-    button.textContent = t("Encuentra tu óptica más cercana");
+    button.textContent = label;
     button.setAttribute("aria-haspopup", "dialog");
     button.addEventListener("click", () => openOpticianLocator(button));
     advisor.insertAdjacentElement("afterend", button);
