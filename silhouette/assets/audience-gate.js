@@ -11,9 +11,16 @@
 b2b: "https://services.leadconnectorhq.com/hooks/fHXK54ukeNMjxEcZtyDv/webhook-trigger/pysyrR6zjikRdy8lLzFU"
   };
   const ADS_B2B_CONVERSION_SEND_TO = "AW-18382327581/VWN9CJz_9t8cEJ2esL1E";
+  const ADS_B2B_CONVERSION_ID = ADS_B2B_CONVERSION_SEND_TO.split("/")[0];
   let adsB2bConversionSent = false;
   const PRODUCT_ROUTE = /(?:\/|#\/)producto\/[a-z0-9-]+/i;
   const B2B_BUTTON = /^(?:a[nñ]adir(?: m[aá]s unidades| al pedido)?|revisar mi pedido|contactar (?:con |un )?asesor|mi pedido)$/i;
+
+  if (/^(?:www\.)?roraimamx\.com$/i.test(window.location.hostname)) {
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+    window.gtag("config", ADS_B2B_CONVERSION_ID);
+  }
 
   const COUNTRY_CODES = [
     "MX", "AR", "BO", "BR", "BZ", "CA", "CL", "CO", "CR", "CU", "DO", "EC", "SV", "GT", "GY", "HN", "HT", "JM", "NI", "PA", "PE", "PY", "SR", "TT", "US", "UY", "VE",
