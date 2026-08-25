@@ -8,7 +8,7 @@
   const IDEMPOTENCY_WINDOW_MS = 24 * 60 * 60 * 1000;
   const WEBHOOK_ENDPOINTS = {
     b2c: "https://services.leadconnectorhq.com/hooks/fHXK54ukeNMjxEcZtyDv/webhook-trigger/31f025f4-614b-4fa9-b4ea-fdf155240900",
-    b2b: "https://services.leadconnectorhq.com/hooks/fHXK54ukeNMjxEcZtyDv/webhook-trigger/0ca5bf0a-cdd5-4b9c-aef4-da244e4e3573"
+b2b: "https://services.leadconnectorhq.com/hooks/fHXK54ukeNMjxEcZtyDv/webhook-trigger/pysyrR6zjikRdy8lLzFU"
   };
   const ADS_B2B_CONVERSION_SEND_TO = "AW-18382327581/VWN9CJz_9t8cEJ2esL1E";
   let adsB2bConversionSent = false;
