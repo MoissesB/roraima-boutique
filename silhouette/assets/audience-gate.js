@@ -15,6 +15,8 @@ b2b: "https://services.leadconnectorhq.com/hooks/fHXK54ukeNMjxEcZtyDv/webhook-tr
   let adsB2bConversionSent = false;
   const PRODUCT_ROUTE = /(?:\/|#\/)producto\/[a-z0-9-]+/i;
   const B2B_BUTTON = /^(?:a[nñ]adir(?: m[aá]s unidades| al pedido)?|revisar mi pedido|contactar (?:con |un )?asesor|mi pedido)$/i;
+  const B2B_LANDING_SLUG = "landing-b2b";
+  const B2B_LEAD_CTA_LABELS = new Set(["alta de cliente", "contactar asesor", "contactar"]);
 
   if (/^(?:www\.)?roraimamx\.com$/i.test(window.location.hostname)) {
     window.dataLayer = window.dataLayer || [];
@@ -413,6 +415,22 @@ b2b: "https://services.leadconnectorhq.com/hooks/fHXK54ukeNMjxEcZtyDv/webhook-tr
     } catch {
       return "";
     }
+  }
+
+  function isSilhouetteLandingUrl(value) {
+    try {
+      const url = new URL(value || window.location.href, window.location.href);
+      const pathname = url.pathname.replace(/\/+$/, "").toLowerCase();
+      return url.origin === window.location.origin && pathname === "/silhouette" && (!url.hash || /^#\/?$/.test(url.hash));
+    } catch {
+      return false;
+    }
+  }
+
+  function audienceFormSlug(audience) {
+    const productSlug = productSlugFromUrl(pendingUrl || window.location.href);
+    if (productSlug) return productSlug;
+    return audience === "b2b" && isSilhouetteLandingUrl(pendingUrl || window.location.href) ? B2B_LANDING_SLUG : "";
   }
 
   function trackAudienceFormComplete(audience, productSlug = productSlugFromUrl(pendingUrl || window.location.href)) {
@@ -1409,7 +1427,7 @@ b2b: "https://services.leadconnectorhq.com/hooks/fHXK54ukeNMjxEcZtyDv/webhook-tr
       }
       if (!form.reportValidity()) return;
       const audience = form.dataset.formAudience;
-      const productSlug = productSlugFromUrl(pendingUrl || window.location.href);
+      const productSlug = audienceFormSlug(audience);
       if (!audience || !productSlug) return;
       if (hasSubmissionMarker(audience, productSlug)) {
         renderSubmissionConfirmation(audience);
@@ -1486,6 +1504,17 @@ b2b: "https://services.leadconnectorhq.com/hooks/fHXK54ukeNMjxEcZtyDv/webhook-tr
     openGate(anchor.href, false);
   }
 
+  function interceptB2BLeadCta(event) {
+    if (event.defaultPrevented || event.button > 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (!isSilhouetteLandingUrl(window.location.href)) return;
+    const trigger = event.target.closest?.("button, a");
+    if (!trigger || !B2B_LEAD_CTA_LABELS.has(normalizeText(trigger.textContent))) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    openGate(window.location.href, false);
+    renderForm("b2b");
+  }
+
   function checkDirectProductRoute() {
     if (!readGrant() && isProductUrl(window.location.href) && (!gate || gate.hidden)) openGate(window.location.href, true);
     applyAudienceVisibility();
@@ -1494,6 +1523,7 @@ b2b: "https://services.leadconnectorhq.com/hooks/fHXK54ukeNMjxEcZtyDv/webhook-tr
   function init() {
     createGate();
     lastRenderedLanguage = currentLanguage();
+    document.addEventListener("click", interceptB2BLeadCta, true);
     document.addEventListener("click", interceptProductNavigation, true);
     window.addEventListener("popstate", checkDirectProductRoute);
     window.addEventListener("hashchange", checkDirectProductRoute);
