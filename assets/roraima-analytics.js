@@ -137,7 +137,9 @@
 
   window.gtag("js", new Date());
   window.gtag("config", measurementId);
-  window.gtag("config", adsMeasurementId);
+  window.gtag("config", adsMeasurementId, {
+    allow_enhanced_conversions: false
+  });
 
   var lastTrackedLocation = window.location.href;
   var routePageViewScheduled = false;
