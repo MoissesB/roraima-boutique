@@ -40,6 +40,51 @@
     return true;
   };
 
+  var allowedNavigationEvents = {
+    find_optician_click: true,
+    catalog_navigation: true,
+    product_navigation: true,
+    professional_navigation: true,
+    distribution_request_click: true
+  };
+
+  function safeToken(value, fallback) {
+    var token = String(value || "").trim().toLowerCase();
+    return /^[a-z0-9/_#.-]{1,120}$/.test(token) ? token : fallback;
+  }
+
+  window.__RORAIMA_TRACK_EVENT__ = function (eventName, details) {
+    var analytics = window.__RORAIMA_GA4__;
+    var normalizedEvent = safeToken(eventName, "");
+    if (!analytics.enabled || typeof window.gtag !== "function" || !allowedNavigationEvents[normalizedEvent]) {
+      return false;
+    }
+    window.gtag("event", normalizedEvent, {
+      brand: safeToken(details && details.brand, "roraima"),
+      route: safeToken(details && details.route, window.location.pathname),
+      product_slug: safeToken(details && details.product_slug, "none")
+    });
+    return true;
+  };
+
+  document.addEventListener("click", function (event) {
+    var action = event.target instanceof Element && event.target.closest("[data-analytics-event]");
+    if (!action) return;
+    window.__RORAIMA_TRACK_EVENT__(action.dataset.analyticsEvent, {
+      brand: action.dataset.analyticsBrand,
+      route: action.dataset.analyticsRoute,
+      product_slug: action.dataset.analyticsProductSlug
+    });
+  });
+
+  if (window.location.pathname.indexOf("/profesionales/") !== 0 && !document.querySelector("script[data-roraima-audience-script]")) {
+    var audienceScript = document.createElement("script");
+    audienceScript.defer = true;
+    audienceScript.src = "/assets/roraima-audience.js?v=20260830-b2c-b2b-1";
+    audienceScript.dataset.roraimaAudienceScript = "true";
+    document.head.appendChild(audienceScript);
+  }
+
   if (!window.__RORAIMA_GA4__.enabled) {
     return;
   }
