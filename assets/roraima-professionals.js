@@ -8,6 +8,16 @@
   var completed = false;
   var redirectStarted = false;
   var postSuccessRoute = "https://roraimamx.com/profesionales/silhouette/catalogo/";
+  var professionalAccessKey = "roraima:silhouette:professional-access";
+
+  function grantProfessionalCatalogAccess() {
+    try {
+      sessionStorage.setItem(professionalAccessKey, String(Date.now()));
+      return Boolean(sessionStorage.getItem(professionalAccessKey));
+    } catch (_) {
+      return false;
+    }
+  }
 
   function modalFocusables() {
     return modal ? Array.prototype.slice.call(modal.querySelectorAll("button:not([disabled]):not([tabindex='-1']), iframe, a[href]")) : [];
@@ -67,6 +77,7 @@
     if (completed || event.origin !== "https://api.leadconnectorhq.com" || !frame || event.source !== frame.contentWindow) return;
     if (!Array.isArray(event.data) || event.data[0] !== "set-sticky-contacts") return;
     completed = true;
+    var accessGranted = grantProfessionalCatalogAccess();
     if (status) status.textContent = "Solicitud recibida. El equipo de Roraima revisará la información.";
     if (typeof window.__RORAIMA_TRACK_FORM_COMPLETE__ === "function") {
       window.__RORAIMA_TRACK_FORM_COMPLETE__({
@@ -74,6 +85,10 @@
         audience: "b2b",
         product_slug: "silhouette-professionals"
       }, "silhouette-b2b-distribution");
+    }
+    if (!accessGranted) {
+      if (status) status.textContent = "Solicitud recibida. No fue posible habilitar el catálogo en esta sesión; vuelve a intentarlo desde este navegador.";
+      return;
     }
     if (!redirectStarted) {
       redirectStarted = true;
@@ -103,4 +118,8 @@
   }
   window.addEventListener("scroll", updateHeader, { passive: true });
   updateHeader();
+
+  if (new URLSearchParams(window.location.search).get("solicitar") === "1") {
+    openModal(null);
+  }
 })();

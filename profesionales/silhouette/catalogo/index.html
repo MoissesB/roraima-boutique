@@ -1,6 +1,20 @@
 <!doctype html>
 <html lang="es-MX">
   <head>
+    <script>
+      (function () {
+        "use strict";
+        var accessKey = "roraima:silhouette:professional-access";
+        var allowed = false;
+        try {
+          allowed = Number(sessionStorage.getItem(accessKey)) > 0;
+        } catch (_) {
+          allowed = false;
+        }
+        window.__RORAIMA_PROFESSIONAL_CATALOG_ALLOWED__ = allowed;
+        if (!allowed) window.location.replace("/profesionales/silhouette/?solicitar=1");
+      })();
+    </script>
     <script defer src="/assets/roraima-analytics.js?v=20260830-b2b-map-1"></script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -8,13 +22,13 @@
     <link rel="canonical" href="https://roraimamx.com/profesionales/silhouette/catalogo/">
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/roraima-favicon-final-20260818.png">
     <title>Catálogo profesional Silhouette · Roraima México</title>
-    <link rel="stylesheet" href="/assets/roraima-professional-catalog.css?v=20260830-b2b-map-1">
+    <link rel="stylesheet" href="/assets/roraima-professional-catalog.css?v=20260830-professional-gate-1">
   </head>
   <body>
     <a class="skip-link" href="#catalogFrame">Saltar al catálogo</a>
     <header class="catalog-header">
       <a class="catalog-brand" href="/profesionales/silhouette/" aria-label="Volver a Silhouette para profesionales">
-        <img src="/assets/roraima-logo-on-dark-v5.png" alt="Roraima Distribuciones">
+        <img src="/assets/roraima-distribuciones-oficial.png" alt="Roraima Distribuciones">
       </a>
       <div class="catalog-title"><span>SILHOUETTE · B2B</span><strong>Catálogo profesional</strong></div>
       <nav aria-label="Navegación del catálogo profesional">
@@ -26,11 +40,17 @@
       <iframe
         id="catalogFrame"
         title="Productos y pedido profesional Silhouette"
-        src="/silhouette/?audience=professional&amp;embedded=1#/catalogo"
+        data-src="/silhouette/?audience=professional&amp;embedded=1#/catalogo"
         loading="eager"
         allow="clipboard-write"
       ></iframe>
       <noscript><p>Activa JavaScript para consultar el catálogo profesional.</p></noscript>
     </main>
+    <script>
+      if (window.__RORAIMA_PROFESSIONAL_CATALOG_ALLOWED__) {
+        var catalogFrame = document.getElementById("catalogFrame");
+        catalogFrame.src = catalogFrame.dataset.src;
+      }
+    </script>
   </body>
 </html>
