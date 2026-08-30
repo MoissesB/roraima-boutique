@@ -141,7 +141,7 @@
           ? "FIND AN OPTICIAN"
           : "ENCONTRAR UNA ÓPTICA";
       node.dataset.roraimaFindOptician = "true";
-      node.dataset.analyticsEvent = "find_optician";
+      node.dataset.analyticsEvent = "find_optician_click";
       node.dataset.analyticsBrand = "silhouette";
       node.dataset.analyticsRoute = window.location.hash || "/silhouette/";
     });
@@ -153,7 +153,7 @@
     rail.className = "roraima-b2c-rail";
     rail.setAttribute("aria-label", "Acciones para consumidor");
     rail.innerHTML = '<a class="roraima-b2c-rail__consumer" href="/silhouette/#/catalogo" data-analytics-event="consumer_catalog" data-analytics-brand="silhouette" data-analytics-route="/silhouette/#/catalogo">Ver catálogo como consumidor</a>' +
-      '<a class="roraima-find-optician" href="' + officialLocator + '" data-analytics-event="find_optician" data-analytics-brand="silhouette" data-analytics-route="/opticas/">Encontrar mi óptica</a>' +
+      '<a class="roraima-find-optician" href="' + officialLocator + '" data-analytics-event="find_optician_click" data-analytics-brand="silhouette" data-analytics-route="/opticas/">Encontrar mi óptica</a>' +
       '<a class="roraima-b2c-rail__professional" href="' + professionalRoute + '" data-analytics-event="professional_distribution" data-analytics-brand="silhouette" data-analytics-route="' + professionalRoute + '">Soy una óptica profesional · Quiero distribuir</a>';
     document.body.appendChild(rail);
   }

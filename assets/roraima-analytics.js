@@ -2,6 +2,8 @@
   "use strict";
 
   var measurementId = "G-LRMY9XFYC6";
+  var adsMeasurementId = "AW-18382327581";
+  var findOpticianConversion = "AW-18382327581/gQ-HCOeR5-ocEJ2esL1E";
   var productionHosts = {
     "roraimamx.com": true,
     "www.roraimamx.com": true
@@ -47,7 +49,6 @@
 
   var allowedNavigationEvents = {
     consumer_catalog: true,
-    find_optician: true,
     professional_distribution: true,
     find_optician_click: true,
     catalog_navigation: true,
@@ -72,6 +73,11 @@
       route: safeToken(details && details.route, window.location.pathname),
       product_slug: safeToken(details && details.product_slug, "none")
     });
+    if (normalizedEvent === "find_optician_click") {
+      window.gtag("event", "conversion", {
+        send_to: findOpticianConversion
+      });
+    }
     return true;
   };
 
@@ -108,6 +114,7 @@
 
   window.gtag("js", new Date());
   window.gtag("config", measurementId);
+  window.gtag("config", adsMeasurementId);
 
   var lastTrackedLocation = window.location.href;
   var routePageViewScheduled = false;
