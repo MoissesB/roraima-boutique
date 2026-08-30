@@ -2,6 +2,52 @@
   "use strict";
 
   var path = window.location.pathname;
+  var audienceParams = new URLSearchParams(window.location.search);
+  var explicitProfessionalCatalog = path.indexOf("/silhouette/") === 0 &&
+    audienceParams.get("audience") === "professional" &&
+    audienceParams.get("embedded") === "1";
+  var professionalParent = window.self === window.top;
+  if (explicitProfessionalCatalog && !professionalParent) {
+    try {
+      professionalParent = window.top.location.pathname.indexOf("/profesionales/silhouette/catalogo/") === 0;
+    } catch (_) {
+      professionalParent = false;
+    }
+  }
+  if (explicitProfessionalCatalog && professionalParent) {
+    document.documentElement.dataset.roraimaAudience = "b2b";
+    document.documentElement.dataset.roraimaProfessionalCatalog = "true";
+    var professionalStylesheet = document.createElement("link");
+    professionalStylesheet.rel = "stylesheet";
+    professionalStylesheet.href = "/assets/roraima-professional-catalog-frame.css?v=20260830-b2b-map-1";
+    professionalStylesheet.dataset.roraimaProfessionalCatalogCss = "true";
+    document.head.appendChild(professionalStylesheet);
+
+    function lockProfessionalCatalogNavigation() {
+      document.querySelectorAll("a").forEach(function (link) {
+        var href = String(link.getAttribute("href") || "").trim();
+        if (href === "#/" || href === "#") link.setAttribute("href", "#/catalogo");
+        if (link.getAttribute("target") === "_top" || link.getAttribute("target") === "_parent") {
+          link.setAttribute("target", "_self");
+        }
+      });
+    }
+
+    var professionalNavigationScheduled = false;
+    function scheduleProfessionalCatalogNavigation() {
+      if (professionalNavigationScheduled) return;
+      professionalNavigationScheduled = true;
+      window.requestAnimationFrame(function () {
+        professionalNavigationScheduled = false;
+        lockProfessionalCatalogNavigation();
+      });
+    }
+
+    lockProfessionalCatalogNavigation();
+    new MutationObserver(scheduleProfessionalCatalogNavigation).observe(document.body, { childList: true, subtree: true });
+    window.addEventListener("hashchange", scheduleProfessionalCatalogNavigation);
+    return;
+  }
   if (path.indexOf("/profesionales/") === 0 || window.__RORAIMA_AUDIENCE_UI__) return;
   window.__RORAIMA_AUDIENCE_UI__ = true;
 
@@ -14,7 +60,7 @@
   if (!document.querySelector("link[data-roraima-audience-css]")) {
     var stylesheet = document.createElement("link");
     stylesheet.rel = "stylesheet";
-    stylesheet.href = "/assets/roraima-audience.css?v=20260830-b2c-b2b-1";
+    stylesheet.href = "/assets/roraima-audience.css?v=20260830-b2b-map-1";
     stylesheet.dataset.roraimaAudienceCss = "true";
     document.head.appendChild(stylesheet);
   }
@@ -95,22 +141,10 @@
           ? "FIND AN OPTICIAN"
           : "ENCONTRAR UNA ÓPTICA";
       node.dataset.roraimaFindOptician = "true";
-      node.dataset.analyticsEvent = "find_optician_click";
+      node.dataset.analyticsEvent = "find_optician";
       node.dataset.analyticsBrand = "silhouette";
       node.dataset.analyticsRoute = window.location.hash || "/silhouette/";
     });
-  }
-
-  function ensureAudienceSwitch() {
-    if (!isSilhouette || document.querySelector(".roraima-audience-switch")) return;
-    var host = document.querySelector(".innova-global-header") || document.querySelector("header");
-    if (!host) return;
-    var nav = document.createElement("nav");
-    nav.className = "roraima-audience-switch";
-    nav.setAttribute("aria-label", "Tipo de visitante");
-    nav.innerHTML = '<a class="roraima-audience-switch__consumer" href="/silhouette/#/catalogo">Soy consumidor</a>' +
-      '<a class="roraima-audience-switch__professional" href="' + professionalRoute + '" data-analytics-event="professional_navigation" data-analytics-brand="silhouette" data-analytics-route="' + professionalRoute + '">Soy una óptica / Profesional</a>';
-    host.appendChild(nav);
   }
 
   function ensureConsumerRail() {
@@ -118,9 +152,15 @@
     var rail = document.createElement("nav");
     rail.className = "roraima-b2c-rail";
     rail.setAttribute("aria-label", "Acciones para consumidor");
-    rail.innerHTML = '<a class="roraima-find-optician" href="' + officialLocator + '" data-analytics-event="find_optician_click" data-analytics-brand="silhouette" data-analytics-route="' + (window.location.hash || "/silhouette/") + '">Encontrar una óptica</a>' +
-      '<a class="roraima-audience-switch__professional" href="' + professionalRoute + '" data-analytics-event="professional_navigation" data-analytics-brand="silhouette" data-analytics-route="' + professionalRoute + '">Soy una óptica / Profesional</a>';
+    rail.innerHTML = '<a class="roraima-b2c-rail__consumer" href="/silhouette/#/catalogo" data-analytics-event="consumer_catalog" data-analytics-brand="silhouette" data-analytics-route="/silhouette/#/catalogo">Ver catálogo como consumidor</a>' +
+      '<a class="roraima-find-optician" href="' + officialLocator + '" data-analytics-event="find_optician" data-analytics-brand="silhouette" data-analytics-route="/opticas/">Encontrar mi óptica</a>' +
+      '<a class="roraima-b2c-rail__professional" href="' + professionalRoute + '" data-analytics-event="professional_distribution" data-analytics-brand="silhouette" data-analytics-route="' + professionalRoute + '">Soy una óptica profesional · Quiero distribuir</a>';
     document.body.appendChild(rail);
+  }
+
+  function removeUpperAudienceSwitch() {
+    if (!isSilhouette) return;
+    document.querySelectorAll(".roraima-audience-switch").forEach(function (node) { node.remove(); });
   }
 
   function applyAudienceMode() {
@@ -135,7 +175,7 @@
     markHidden();
     replaceCopy();
     decorateOpticianAction();
-    ensureAudienceSwitch();
+    removeUpperAudienceSwitch();
     ensureConsumerRail();
   }
 

@@ -1,0 +1,10 @@
+html[data-roraima-professional-catalog="true"] .innova-global-header,
+html[data-roraima-professional-catalog="true"] .roraima-b2c-rail,
+html[data-roraima-professional-catalog="true"] .roraima-audience-switch,
+html[data-roraima-professional-catalog="true"] footer {
+  display: none !important;
+}
+
+html[data-roraima-professional-catalog="true"] body {
+  padding-bottom: 0 !important;
+}

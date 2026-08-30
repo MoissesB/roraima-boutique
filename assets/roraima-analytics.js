@@ -6,6 +6,11 @@
     "roraimamx.com": true,
     "www.roraimamx.com": true
   };
+  var pageParams = new URLSearchParams(window.location.search);
+  var suppressEmbeddedProfessionalPageView = window.self !== window.top &&
+    window.location.pathname.indexOf("/silhouette/") === 0 &&
+    pageParams.get("audience") === "professional" &&
+    pageParams.get("embedded") === "1";
 
   if (window.__RORAIMA_GA4__) {
     return;
@@ -41,6 +46,9 @@
   };
 
   var allowedNavigationEvents = {
+    consumer_catalog: true,
+    find_optician: true,
+    professional_distribution: true,
     find_optician_click: true,
     catalog_navigation: true,
     product_navigation: true,
@@ -80,9 +88,13 @@
   if (window.location.pathname.indexOf("/profesionales/") !== 0 && !document.querySelector("script[data-roraima-audience-script]")) {
     var audienceScript = document.createElement("script");
     audienceScript.defer = true;
-    audienceScript.src = "/assets/roraima-audience.js?v=20260830-b2c-b2b-1";
+    audienceScript.src = "/assets/roraima-audience.js?v=20260830-b2b-map-1";
     audienceScript.dataset.roraimaAudienceScript = "true";
     document.head.appendChild(audienceScript);
+  }
+
+  if (suppressEmbeddedProfessionalPageView) {
+    return;
   }
 
   if (!window.__RORAIMA_GA4__.enabled) {

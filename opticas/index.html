@@ -4,20 +4,21 @@
     <script defer src="/assets/roraima-analytics.js?v=20260830-ga4-global"></script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="description" content="Consulta ópticas del directorio de Roraima Distribuciones en México por nombre, ciudad o dirección.">
+    <meta name="description" content="Encuentra ópticas autorizadas en el directorio latinoamericano de Roraima Distribuciones.">
     <link rel="canonical" href="https://roraimamx.com/opticas/">
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/roraima-favicon-final-20260818.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/roraima-favicon-final-20260818.png">
     <meta property="og:type" content="website">
     <meta property="og:title" content="Encuentra una óptica · Roraima México">
-    <meta property="og:description" content="Busca por nombre, ciudad o dirección dentro del directorio aprobado de ópticas en México.">
+    <meta property="og:description" content="Busca por país, ciudad o nombre y consulta las ubicaciones verificadas en el mapa.">
     <meta property="og:url" content="https://roraimamx.com/opticas/">
     <meta property="og:image" content="https://roraimamx.com/assets/silhouette-marketing-white.jpg">
     <title>Encuentra una óptica · Roraima México</title>
-    <link rel="stylesheet" href="/assets/roraima-optics-locator.css?v=20260830-optics-1">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="/assets/roraima-optics-locator.css?v=20260830-optics-map-2">
   </head>
   <body>
-    <a class="skip-link" href="#searchTitle">Saltar al buscador</a>
+    <a class="skip-link" href="#directoryFilters">Saltar al buscador</a>
     <header class="locator-header">
       <a class="locator-brand" href="/" aria-label="Roraima México, inicio">
         <img src="/assets/roraima-logo-on-dark-v5.png" alt="Roraima Distribuciones">
@@ -28,60 +29,77 @@
       </nav>
     </header>
 
-    <main class="locator-shell">
-      <section class="locator-search" aria-labelledby="searchTitle">
+    <main class="locator-layout">
+      <section class="locator-panel" aria-labelledby="locatorTitle">
         <div class="locator-intro">
-          <span class="eyebrow">SILHOUETTE · MÉXICO</span>
-          <h1 id="searchTitle">Encuentra una óptica</h1>
-          <p>Escribe el nombre de una óptica, una ciudad o parte de una dirección para consultar los establecimientos disponibles en el directorio de Roraima.</p>
+          <span class="eyebrow">SILHOUETTE · DIRECTORIO</span>
+          <h1 id="locatorTitle">Encuentra una óptica</h1>
+          <p>Explora las ubicaciones disponibles en Latinoamérica. Los marcadores corresponden únicamente a direcciones verificadas en el directorio aprobado.</p>
         </div>
 
-        <form class="search-form" role="search" data-search-form>
-          <label for="opticsQuery">Ciudad, dirección u óptica</label>
-          <div class="search-control">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
-            <input id="opticsQuery" name="optics-query" type="search" autocomplete="off" placeholder="Ej. Guadalajara, Lindavista o Costco" aria-describedby="searchHelp searchStatus" data-search-input>
-            <button type="button" class="clear-search" data-clear-search hidden>Limpiar</button>
+        <form class="filter-grid" id="directoryFilters" role="search" data-filter-form>
+          <div class="field">
+            <label for="countryFilter">País</label>
+            <select id="countryFilter" data-country-filter>
+              <option value="">Todos los países</option>
+            </select>
           </div>
-          <p id="searchHelp" class="search-help">La búsqueda se realiza localmente con los datos aprobados del directorio; no envía tu consulta a servicios de geocodificación.</p>
-          <p class="limitation-inline">Los resultados coinciden con el texto de ciudad o dirección. El directorio no contiene coordenadas para calcular distancia exacta.</p>
+          <div class="field">
+            <label for="cityFilter">Ciudad</label>
+            <select id="cityFilter" data-city-filter>
+              <option value="">Todas las ciudades</option>
+            </select>
+          </div>
+          <div class="field field--wide">
+            <label for="nameFilter">Nombre de óptica</label>
+            <div class="search-control">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
+              <input id="nameFilter" type="search" autocomplete="off" placeholder="Ej. Costco, Zeiss u Óptica Americana" data-name-filter>
+              <button type="button" class="clear-search" data-clear-filters>Limpiar</button>
+            </div>
+          </div>
         </form>
 
-        <div class="result-summary">
-          <p id="searchStatus" role="status" aria-live="polite" data-search-status>Cargando directorio…</p>
-          <span data-directory-count></span>
-        </div>
-
-        <div class="results" data-results aria-busy="true"></div>
-        <button class="show-more" type="button" data-show-more hidden>Mostrar más ópticas</button>
-
-        <noscript>
-          <p class="error-message">Activa JavaScript para buscar en el directorio de ópticas.</p>
-        </noscript>
-      </section>
-
-      <aside class="locator-visual" aria-labelledby="mapInfoTitle">
-        <div class="visual-media" aria-hidden="true">
-          <img src="/assets/silhouette-marketing-white.jpg" alt="">
-        </div>
-        <div class="visual-copy">
-          <span class="eyebrow">UBICACIÓN SIN SUPOSICIONES</span>
-          <h2 id="mapInfoTitle">Direcciones verificables, sin marcadores inventados.</h2>
-          <p>El archivo aprobado no incluye coordenadas. Por eso mostramos coincidencias por ciudad o dirección y generamos cada enlace de mapa desde el nombre y la dirección publicados.</p>
-          <div class="accuracy-note">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-6.1 7-13a7 7 0 1 0-14 0c0 6.9 7 13 7 13Z"></path><circle cx="12" cy="9" r="2.5"></circle></svg>
-            <div><strong>Cercanía exacta no disponible</strong><span>Sin coordenadas no es posible ordenar por distancia real. Usa “Ver en Maps” para confirmar la ubicación del resultado elegido.</span></div>
+        <div class="directory-summary">
+          <p role="status" aria-live="polite" data-search-status>Cargando directorio…</p>
+          <div class="summary-chips" aria-label="Cobertura del directorio">
+            <span data-directory-count></span>
+            <span data-coordinate-count></span>
           </div>
         </div>
-      </aside>
+
+        <div class="directory-results" data-results aria-busy="true"></div>
+        <button class="show-more" type="button" data-show-more hidden>Mostrar más ópticas</button>
+
+        <noscript><p class="error-message">Activa JavaScript para consultar el mapa y el directorio.</p></noscript>
+      </section>
+
+      <section class="map-panel" aria-labelledby="mapTitle">
+        <div class="map-toolbar">
+          <div>
+            <span class="eyebrow">COBERTURA REGIONAL</span>
+            <h2 id="mapTitle">Mapa de Latinoamérica</h2>
+          </div>
+          <button type="button" class="map-reset" data-reset-map>Ver Latinoamérica</button>
+        </div>
+        <div class="map-frame">
+          <div id="opticsMap" role="application" aria-label="Mapa interactivo de ópticas verificadas"></div>
+          <p class="map-loading" data-map-loading>Cargando mapa…</p>
+        </div>
+        <div class="map-note">
+          <span class="marker-key" aria-hidden="true"></span>
+          <p><strong>Marcadores verificados.</strong> Las ópticas aún no resueltas permanecen en la lista con sus enlaces de consulta y ruta, sin ubicar un punto aproximado.</p>
+        </div>
+      </section>
     </main>
 
     <footer class="locator-footer">
-      <span>Roraima Distribuciones · México</span>
+      <span>Roraima Distribuciones · Latinoamérica</span>
       <a href="/silhouette/politica-de-privacidad/">Política de privacidad</a>
       <a href="/profesionales/silhouette/">Profesionales</a>
     </footer>
 
-    <script src="/assets/roraima-optics-locator.js?v=20260830-optics-1"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+    <script src="/assets/roraima-optics-locator.js?v=20260830-optics-map-2"></script>
   </body>
 </html>

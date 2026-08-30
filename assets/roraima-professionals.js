@@ -7,7 +7,7 @@
   var lastFocused = null;
   var completed = false;
   var redirectStarted = false;
-  var postSuccessRoute = "https://roraimamx.com/silhouette/#/catalogo";
+  var postSuccessRoute = "https://roraimamx.com/profesionales/silhouette/catalogo/";
 
   function modalFocusables() {
     return modal ? Array.prototype.slice.call(modal.querySelectorAll("button:not([disabled]):not([tabindex='-1']), iframe, a[href]")) : [];
@@ -83,15 +83,24 @@
 
   var menuToggle = document.querySelector("[data-menu-toggle]");
   var primaryNav = document.querySelector("[data-primary-nav]");
+  var siteHeader = document.querySelector("[data-site-header]");
   if (menuToggle && primaryNav) {
     menuToggle.addEventListener("click", function () {
       var open = primaryNav.classList.toggle("is-open");
       menuToggle.setAttribute("aria-expanded", String(open));
+      document.body.classList.toggle("menu-open", open);
     });
     primaryNav.addEventListener("click", function (event) {
       if (!(event.target instanceof Element) || !event.target.closest("a")) return;
       primaryNav.classList.remove("is-open");
       menuToggle.setAttribute("aria-expanded", "false");
+      document.body.classList.remove("menu-open");
     });
   }
+
+  function updateHeader() {
+    if (siteHeader) siteHeader.classList.toggle("is-scrolled", window.scrollY > 30);
+  }
+  window.addEventListener("scroll", updateHeader, { passive: true });
+  updateHeader();
 })();
