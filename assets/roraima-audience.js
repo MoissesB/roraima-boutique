@@ -5,10 +5,11 @@
   if (path.indexOf("/profesionales/") === 0 || window.__RORAIMA_AUDIENCE_UI__) return;
   window.__RORAIMA_AUDIENCE_UI__ = true;
 
-  var officialLocator = "https://www.silhouette.com/es/es/busqueda-de-comercios";
+  var officialLocator = "/opticas/";
   var professionalRoute = "/profesionales/silhouette/";
   var isSilhouette = path.indexOf("/silhouette/") === 0;
   var isAlfred = path.indexOf("/alfred-kerbs/") === 0;
+  if (!isSilhouette && !isAlfred && path !== "/") return;
 
   if (!document.querySelector("link[data-roraima-audience-css]")) {
     var stylesheet = document.createElement("link");
