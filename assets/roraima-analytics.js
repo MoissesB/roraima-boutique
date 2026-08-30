@@ -74,9 +74,14 @@
       product_slug: safeToken(details && details.product_slug, "none")
     });
     if (normalizedEvent === "find_optician_click") {
-      window.gtag("event", "conversion", {
+      var conversionParameters = {
         send_to: findOpticianConversion
-      });
+      };
+      if (details && typeof details.event_callback === "function") {
+        conversionParameters.event_callback = details.event_callback;
+        conversionParameters.event_timeout = 1200;
+      }
+      window.gtag("event", "conversion", conversionParameters);
     }
     return true;
   };
@@ -84,11 +89,34 @@
   document.addEventListener("click", function (event) {
     var action = event.target instanceof Element && event.target.closest("[data-analytics-event]");
     if (!action) return;
+    var navigationEvent = action.dataset.analyticsEvent === "find_optician_click" &&
+      action.matches("a[href]") &&
+      (!action.target || action.target === "_self") &&
+      !event.defaultPrevented &&
+      !event.metaKey &&
+      !event.ctrlKey &&
+      !event.shiftKey &&
+      !event.altKey &&
+      (typeof event.button !== "number" || event.button === 0);
+    var destination = navigationEvent ? action.href : "";
+    var navigationComplete = false;
+    var continueNavigation = function () {
+      if (!navigationEvent || navigationComplete) return;
+      navigationComplete = true;
+      window.location.assign(destination);
+    };
+    if (navigationEvent) {
+      event.preventDefault();
+    }
     window.__RORAIMA_TRACK_EVENT__(action.dataset.analyticsEvent, {
       brand: action.dataset.analyticsBrand,
       route: action.dataset.analyticsRoute,
-      product_slug: action.dataset.analyticsProductSlug
+      product_slug: action.dataset.analyticsProductSlug,
+      event_callback: navigationEvent ? continueNavigation : null
     });
+    if (navigationEvent) {
+      window.setTimeout(continueNavigation, 1200);
+    }
   });
 
   if (window.location.pathname.indexOf("/profesionales/") !== 0 && !document.querySelector("script[data-roraima-audience-script]")) {
