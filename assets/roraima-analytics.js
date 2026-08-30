@@ -77,10 +77,6 @@
       var conversionParameters = {
         send_to: findOpticianConversion
       };
-      if (details && typeof details.event_callback === "function") {
-        conversionParameters.event_callback = details.event_callback;
-        conversionParameters.event_timeout = 1200;
-      }
       window.gtag("event", "conversion", conversionParameters);
     }
     return true;
@@ -111,8 +107,7 @@
     window.__RORAIMA_TRACK_EVENT__(action.dataset.analyticsEvent, {
       brand: action.dataset.analyticsBrand,
       route: action.dataset.analyticsRoute,
-      product_slug: action.dataset.analyticsProductSlug,
-      event_callback: navigationEvent ? continueNavigation : null
+      product_slug: action.dataset.analyticsProductSlug
     });
     if (navigationEvent) {
       window.setTimeout(continueNavigation, 1200);
