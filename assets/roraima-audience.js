@@ -26,7 +26,8 @@
       professionalParent = (
         professionalTopPath.indexOf("/profesionales/silhouette/catalogo/") === 0 ||
         professionalTopPath.indexOf("/profesionales/alfred-kerbs/") === 0 ||
-        professionalTopPath.indexOf("/profesionales/vista/silhouette/") === 0
+        professionalTopPath.indexOf("/profesionales/vista/silhouette/") === 0 ||
+        professionalTopPath.indexOf("/profesionales/vista/alfred-kerbs/") === 0
       );
     } catch (_) {
       professionalParent = false;

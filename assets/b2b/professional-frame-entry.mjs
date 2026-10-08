@@ -1,5 +1,5 @@
 import { mountCatalogAdapter } from "./catalog-adapter.mjs?v=20261008-visual-2";
-import { installProfessionalHeader } from "./professional-header.mjs?v=20261008-visual-2";
+import { installProfessionalHeader } from "./professional-header.mjs?v=20261008-visual-3";
 
 try {
   const brand = window.parent !== window

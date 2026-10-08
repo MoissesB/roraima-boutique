@@ -1,5 +1,5 @@
 const ENTRY_ID = "roraima-professional-frame-entry";
-const ENTRY_SRC = "/assets/b2b/professional-frame-entry.mjs?v=20261008-visual-2";
+const ENTRY_SRC = "/assets/b2b/professional-frame-entry.mjs?v=20261008-visual-3";
 
 function enhanceFrame(frame) {
   try {
@@ -47,5 +47,13 @@ export function installProfessionalFrame(frame) {
   frame.addEventListener("load", () => {
     if (!promoteProfessionalRoute(frame)) enhanceFrame(frame);
   });
-  enhanceFrame(frame);
+  // Avoid enhancing the transient about:blank document before the real catalog loads.
+  try {
+    if (frame.contentDocument?.readyState === "complete" &&
+        frame.contentWindow?.location?.href !== "about:blank") {
+      enhanceFrame(frame);
+    }
+  } catch {
+    // The load listener will handle the final same-origin catalog document.
+  }
 }

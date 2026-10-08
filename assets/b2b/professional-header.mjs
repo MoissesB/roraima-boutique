@@ -77,7 +77,9 @@ function installStyles() {
   const style = document.createElement("style");
   style.id = "roraima-professional-header-style";
   style.textContent = `
+    html[data-roraima-professional-catalog="true"] .innova-global-header,
     .innova-global-header {
+      display: grid !important;
       position: sticky !important;
       top: 0 !important;
       z-index: 2500 !important;
