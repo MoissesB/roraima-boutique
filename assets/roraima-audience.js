@@ -72,7 +72,7 @@
   window.__RORAIMA_AUDIENCE_UI__ = true;
 
   var officialLocator = "/opticas/";
-  var professionalRoute = "/profesionales/silhouette/";
+  var professionalRoute = "/profesionales/vista/silhouette/";
   var isSilhouette = path.indexOf("/silhouette/") === 0;
   var isAlfred = path.indexOf("/alfred-kerbs/") === 0;
   if (!isSilhouette && !isAlfred && path !== "/") return;

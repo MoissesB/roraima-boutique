@@ -117,7 +117,7 @@
   if (window.location.pathname.indexOf("/profesionales/") !== 0 && !document.querySelector("script[data-roraima-audience-script]")) {
     var audienceScript = document.createElement("script");
     audienceScript.defer = true;
-    audienceScript.src = "/assets/roraima-audience.js?v=20261008-visual-3";
+    audienceScript.src = "/assets/roraima-audience.js?v=20261008-visual-4";
     audienceScript.dataset.roraimaAudienceScript = "true";
     document.head.appendChild(audienceScript);
   }
