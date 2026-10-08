@@ -1,5 +1,5 @@
 const ENTRY_ID = "roraima-professional-frame-entry";
-const ENTRY_SRC = "/assets/b2b/professional-frame-entry.mjs?v=20261008-visual-5";
+const ENTRY_SRC = "/assets/b2b/professional-frame-entry.mjs?v=20261008-visual-6";
 
 function enhanceFrame(frame) {
   try {
