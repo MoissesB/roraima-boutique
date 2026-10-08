@@ -117,7 +117,7 @@
   if (window.location.pathname.indexOf("/profesionales/") !== 0 && !document.querySelector("script[data-roraima-audience-script]")) {
     var audienceScript = document.createElement("script");
     audienceScript.defer = true;
-    audienceScript.src = "/assets/roraima-audience.js?v=20260830-b2b-map-1";
+    audienceScript.src = "/assets/roraima-audience.js?v=20261007-professional-catalog-2";
     audienceScript.dataset.roraimaAudienceScript = "true";
     document.head.appendChild(audienceScript);
   }

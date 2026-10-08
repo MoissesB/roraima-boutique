@@ -3,13 +3,31 @@
 
   var path = window.location.pathname;
   var audienceParams = new URLSearchParams(window.location.search);
-  var explicitProfessionalCatalog = path.indexOf("/silhouette/") === 0 &&
+  var professionalFrameBrand = "";
+  try {
+    if (window.self !== window.top && window.top.location.origin === window.location.origin) {
+      professionalFrameBrand = window.top.document.body?.dataset.professionalBrand || "";
+    }
+  } catch (_) {
+    professionalFrameBrand = "";
+  }
+  var explicitProfessionalCatalog = (
+    path.indexOf("/silhouette/") === 0 &&
     audienceParams.get("audience") === "professional" &&
-    audienceParams.get("embedded") === "1";
+    audienceParams.get("embedded") === "1"
+  ) || (
+    professionalFrameBrand === "alfred-kerbs" &&
+    path.indexOf("/alfred-kerbs/") === 0
+  );
   var professionalParent = window.self === window.top;
   if (explicitProfessionalCatalog && !professionalParent) {
     try {
-      professionalParent = window.top.location.pathname.indexOf("/profesionales/silhouette/catalogo/") === 0;
+      var professionalTopPath = window.top.location.pathname;
+      professionalParent = (
+        professionalTopPath.indexOf("/profesionales/silhouette/catalogo/") === 0 ||
+        professionalTopPath.indexOf("/profesionales/alfred-kerbs/") === 0 ||
+        professionalTopPath.indexOf("/profesionales/vista/silhouette/") === 0
+      );
     } catch (_) {
       professionalParent = false;
     }
@@ -27,7 +45,8 @@
       document.querySelectorAll("a").forEach(function (link) {
         var href = String(link.getAttribute("href") || "").trim();
         if (href === "#/" || href === "#") link.setAttribute("href", "#/catalogo");
-        if (link.getAttribute("target") === "_top" || link.getAttribute("target") === "_parent") {
+        if ((link.getAttribute("target") === "_top" || link.getAttribute("target") === "_parent") &&
+            href.indexOf("/profesionales/") !== 0) {
           link.setAttribute("target", "_self");
         }
       });

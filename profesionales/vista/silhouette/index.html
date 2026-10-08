@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Silhouette profesional · Vista Roraima</title>
+  <link rel="icon" type="image/png" href="/assets/roraima-favicon-final-20260818.png">
+  <link rel="stylesheet" href="/assets/b2b/visual-preview.css?v=20261008-1">
+  <script src="/assets/b2b/visual-preview-config.js?v=20261008-1"></script>
+</head>
+<body data-professional-brand="silhouette" data-professional-preview="true">
+  <div class="preview-note">Vista visual · Puedes seleccionar productos · El pedido se guarda solo en este navegador y aún no se envía</div>
+  <main class="preview-stage">
+    <iframe id="catalogFrame" title="Catálogo visual Silhouette" src="/silhouette/?audience=professional&amp;embedded=1#/catalogo" loading="eager" allow="clipboard-write"></iframe>
+  </main>
+  <script type="module">
+    import { mountCatalogAdapter } from "/assets/b2b/catalog-adapter.mjs?v=20261008-1";
+    import { installProfessionalFrame } from "/assets/b2b/professional-frame-bridge.mjs?v=20261008-2";
+    mountCatalogAdapter({ brand: "silhouette" });
+    installProfessionalFrame(document.getElementById("catalogFrame"));
+  </script>
+</body>
+</html>
