@@ -1,6 +1,6 @@
 import { LEGACY_ORDER_SOURCES, dedupeItems } from "./order-core.mjs";
 import { installRoraimaB2B } from "./roraima-b2b-service.mjs";
-import { mountOrderUI } from "./order-ui.mjs";
+import { mountOrderUI } from "./order-ui.mjs?v=20261008-3";
 
 function sameOriginTop(currentWindow) {
   try {

@@ -70,6 +70,32 @@ function statusCopy(snapshot) {
   return "";
 }
 
+function renderVisualCustomerForm(customer, total) {
+  const field = (name, label, options = {}) => `<label class="field${options.wide ? " field-wide" : ""}"><span>${label}${options.required ? " *" : ""}</span><input name="${name}" type="${options.type || "text"}" ${options.required ? "required" : ""} maxlength="${options.maxlength || 120}" value="${escapeHtml(customer[name] || "")}"></label>`;
+  return `<section class="optic visual-customer">
+    <h3>Datos del cliente para el PDF</h3>
+    <p>Completa los datos de la óptica. Se usarán solo para generar el PDF en este dispositivo: no se envían ni se guardan en el servidor.</p>
+    <form data-visual-pdf-form>
+      <div class="optic-grid">
+        ${field("optical_name", "Nombre de la óptica", { required: true })}
+        ${field("company_name", "Razón social", { required: true })}
+        ${field("contact_name", "Nombre del contacto", { required: true })}
+        ${field("email", "Correo del cliente", { required: true, type: "email" })}
+        ${field("phone", "Teléfono", { required: true, type: "tel", maxlength: 32 })}
+        ${field("city", "Ciudad", { required: true })}
+        ${field("country", "País", { required: true })}
+        ${field("address", "Dirección", { wide: true, maxlength: 200 })}
+        <label class="field field-wide"><span>Observaciones</span><textarea name="notes" rows="2" maxlength="500">${escapeHtml(customer.notes || "")}</textarea></label>
+      </div>
+      <div class="signature-head"><strong>Firma del cliente</strong><button type="button" data-clear-signature>Limpiar firma</button></div>
+      <canvas class="signature-pad" data-signature width="520" height="140" aria-label="Espacio para firmar con el dedo o el cursor"></canvas>
+      <small class="signature-help">Firma con el dedo o el cursor. Es una constancia visual, no una firma electrónica certificada.</small>
+      <button class="pdf-button" type="submit" ${total < 1 ? "disabled" : ""}>Descargar PDF del pedido</button>
+      <p class="pdf-feedback" data-pdf-feedback role="status" aria-live="polite"></p>
+    </form>
+  </section>`;
+}
+
 const STYLE = `
   :host { color: #1f1d1c; font-family: Montserrat, Arial, sans-serif; }
   * { box-sizing: border-box; }
@@ -121,6 +147,16 @@ const STYLE = `
   .submit-order p { margin: 0 0 12px; color: #68615d; font-size: 13px; }
   .submit-order button { width: 100%; border: 1px solid #211f20; padding: 12px 16px; background: #211f20; color: #fff; cursor: pointer; }
   .submit-order button:disabled { cursor: not-allowed; opacity: .5; }
+  .visual-customer { background: #fff; }
+  .visual-customer .field input, .visual-customer .field textarea { border-radius: 4px; }
+  .signature-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 18px; }
+  .signature-head strong { font-size: 13px; }
+  .signature-head button { border: 0; background: transparent; color: #4b4540; text-decoration: underline; cursor: pointer; }
+  .signature-pad { display: block; width: 100%; height: 140px; margin-top: 8px; border: 1px solid #a9a39d; border-radius: 4px; background: #fff; touch-action: none; cursor: crosshair; }
+  .signature-help { display: block; margin: 6px 0 14px; color: #68615d; line-height: 1.5; }
+  .pdf-button { width: 100%; min-height: 44px; border: 1px solid #211f20; background: #211f20; color: #fff; font-weight: 700; cursor: pointer; }
+  .pdf-button:disabled { opacity: .5; cursor: not-allowed; }
+  .pdf-feedback { min-height: 1.2em; margin: 8px 0 0; color: #5a3c19; font-size: 12px; }
   @media (max-width: 560px) {
     .body { padding: 18px 14px 32px; }
     .item { grid-template-columns: 50px minmax(0,1fr) 68px 28px; gap: 8px; padding: 10px; }
@@ -148,6 +184,55 @@ export function mountOrderUI({
   let open = inline;
   let latest = service.getSnapshot();
   const visualPreview = Boolean(service.isVisualPreview);
+  const visualCustomer = {};
+  let visualSignature = "";
+
+  function mountSignature() {
+    const canvas = shadow.querySelector("[data-signature]");
+    if (!canvas) return;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    context.strokeStyle = "#211f20";
+    context.fillStyle = "#211f20";
+    context.lineWidth = 2.4;
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    if (visualSignature) {
+      const image = new Image();
+      image.onload = () => context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      image.src = visualSignature;
+    }
+    let drawing = false;
+    const point = (event) => {
+      const rect = canvas.getBoundingClientRect();
+      return { x: (event.clientX - rect.left) * canvas.width / rect.width, y: (event.clientY - rect.top) * canvas.height / rect.height };
+    };
+    canvas.addEventListener("pointerdown", (event) => {
+      drawing = true;
+      canvas.setPointerCapture(event.pointerId);
+      const { x, y } = point(event);
+      context.beginPath();
+      context.moveTo(x, y);
+      context.fillRect(x - 1, y - 1, 2, 2);
+    });
+    canvas.addEventListener("pointermove", (event) => {
+      if (!drawing) return;
+      const { x, y } = point(event);
+      context.lineTo(x, y);
+      context.stroke();
+    });
+    const finish = () => {
+      if (!drawing) return;
+      drawing = false;
+      visualSignature = canvas.toDataURL("image/png");
+    };
+    canvas.addEventListener("pointerup", finish);
+    canvas.addEventListener("pointercancel", finish);
+    shadow.querySelector("[data-clear-signature]")?.addEventListener("click", () => {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      visualSignature = "";
+    });
+  }
 
   function render() {
     const optic = currentOptic(latest.state);
@@ -168,7 +253,7 @@ export function mountOrderUI({
             ${ORDER_BRANDS.map((entry) => `<button type="button" data-view="${entry}" aria-pressed="${view === entry}">${BRAND_LABELS[entry]} (${latest.totals[entry] || 0})</button>`).join("")}
           </nav>
           ${renderItems(latest.state, view)}
-          ${visualPreview ? `<section class="submit-order"><p>Esta es la vista visual del portal. Puedes seleccionar productos, cambiar cantidades y comparar ambas marcas. El acceso de vendedores y el envío de pedidos se activarán después.</p><button type="button" disabled>Envío de pedidos próximamente</button></section>` : `<section class="optic">
+          ${visualPreview ? `${renderVisualCustomerForm(visualCustomer, total)}<section class="submit-order"><p>Este PDF es un borrador descargado por ti. El inicio de sesión y el envío de pedidos todavía no están conectados.</p><button type="button" disabled>Envío de pedidos próximamente</button></section>` : `<section class="optic">
             <h3>Óptica del pedido</h3>
             <p>Guarda tus ópticas una vez y reutilízalas en futuras selecciones.</p>
             <div class="optic-picker">
@@ -225,6 +310,30 @@ export function mountOrderUI({
     shadow.querySelector("[data-submit-order]")?.addEventListener("click", () => {
       service.submitOrder().catch(() => undefined);
     });
+    const visualForm = shadow.querySelector("[data-visual-pdf-form]");
+    visualForm?.addEventListener("input", (event) => {
+      if (event.target.name) visualCustomer[event.target.name] = event.target.value;
+    });
+    visualForm?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!event.currentTarget.reportValidity()) return;
+      Object.assign(visualCustomer, Object.fromEntries(new FormData(event.currentTarget).entries()));
+      const feedback = shadow.querySelector("[data-pdf-feedback]");
+      const button = event.currentTarget.querySelector(".pdf-button");
+      button.disabled = true;
+      feedback.textContent = "Preparando PDF…";
+      try {
+        const { downloadVisualOrderPdf } = await import("./visual-order-pdf.mjs?v=20261008-3");
+        const items = ORDER_BRANDS.flatMap((entry) => latest.state.carts[entry]?.items || []);
+        await downloadVisualOrderPdf({ items, customer: visualCustomer, signature: visualSignature });
+        feedback.textContent = "PDF descargado. El pedido no se ha enviado a Roraima.";
+      } catch (error) {
+        feedback.textContent = error.message || "No se pudo generar el PDF.";
+      } finally {
+        button.disabled = false;
+      }
+    });
+    mountSignature();
   }
 
   const unsubscribe = service.subscribe((next) => {

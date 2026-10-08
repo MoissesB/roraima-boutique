@@ -89,6 +89,34 @@ function installStyles() {
     .roraima-professional-advisor-hidden {
       display: none !important;
     }
+    .roraima-professional-quick-add {
+      position: fixed;
+      z-index: 2147483000;
+      left: 18px;
+      bottom: 20px;
+      max-width: calc(100vw - 180px);
+      min-height: 48px;
+      padding: 11px 20px;
+      border: 1px solid #fff;
+      border-radius: 999px;
+      background: #211f20;
+      color: #fff;
+      box-shadow: 0 8px 24px #0004;
+      font: 700 13px/1.2 Inter, Arial, sans-serif;
+      cursor: pointer;
+    }
+    .roraima-professional-quick-add:focus-visible {
+      outline: 3px solid #f5bd27;
+      outline-offset: 2px;
+    }
+    @media (max-width: 700px) {
+      .roraima-professional-quick-add {
+        bottom: 86px;
+        left: 12px;
+        max-width: calc(100vw - 24px);
+        min-height: 46px;
+      }
+    }
     .roraima-professional-account {
       min-height: 30px;
       display: inline-flex !important;
@@ -273,6 +301,27 @@ function restoreProfessionalControls(brand) {
   });
 }
 
+function updateAlfredQuickAdd(brand) {
+  if (brand !== "alfred-kerbs" || !visualPreviewContext()) return;
+  const original = document.querySelector(".product-order-panel button.button--dark");
+  let quickAdd = document.getElementById("roraima-professional-quick-add");
+  if (!original) {
+    quickAdd?.remove();
+    return;
+  }
+  if (!quickAdd) {
+    quickAdd = document.createElement("button");
+    quickAdd.id = "roraima-professional-quick-add";
+    quickAdd.className = "roraima-professional-quick-add";
+    quickAdd.type = "button";
+    quickAdd.textContent = "Añadir a mi pedido";
+    quickAdd.addEventListener("click", () => {
+      document.querySelector(".product-order-panel button.button--dark")?.click();
+    });
+    document.body.appendChild(quickAdd);
+  }
+}
+
 function updateSilhouetteProductActions(brand) {
   if (brand !== "silhouette") return;
   const isProductRoute = /^#\/producto\//i.test(window.location.hash);
@@ -310,6 +359,7 @@ export function installProfessionalHeader({ brand } = {}) {
   installStyles();
   installProfessionalNavigation();
   restoreProfessionalControls(brand);
+  updateAlfredQuickAdd(brand);
   updateSilhouetteProductActions(brand);
   updateHeader();
 
@@ -320,6 +370,7 @@ export function installProfessionalHeader({ brand } = {}) {
     window.requestAnimationFrame(() => {
       updateScheduled = false;
       restoreProfessionalControls(brand);
+      updateAlfredQuickAdd(brand);
       updateSilhouetteProductActions(brand);
       updateHeader();
     });
