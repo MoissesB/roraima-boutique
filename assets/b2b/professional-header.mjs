@@ -304,11 +304,28 @@ function installProfessionalNavigation() {
   }, true);
 }
 
+function installSilhouetteReviewOrder(brand) {
+  if (brand !== "silhouette" || document.documentElement.dataset.roraimaReviewOrderNavigation === "true") return;
+  document.documentElement.dataset.roraimaReviewOrderNavigation = "true";
+  document.addEventListener("click", (event) => {
+    if (!/^#\/producto\//i.test(window.location.hash)) return;
+    const button = event.target instanceof Element ? event.target.closest("button") : null;
+    if (labelOf(button) !== "revisar mi pedido") return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const host = window.parent.document.querySelector('[data-roraima-b2b-ui="drawer"]');
+    const openButton = host?.shadowRoot?.querySelector("button[data-open]");
+    if (openButton) openButton.click();
+    else window.top.location.assign(new URL(orderRoute(), window.location.origin).href);
+  }, true);
+}
+
 export function installProfessionalHeader({ brand } = {}) {
   if (!professionalContext(brand)) return false;
   document.documentElement.dataset.roraimaProfessionalBrand = brand;
   installStyles();
   installProfessionalNavigation();
+  installSilhouetteReviewOrder(brand);
   restoreProfessionalControls(brand);
   updateSilhouetteProductActions(brand);
   updateHeader();

@@ -12,9 +12,12 @@
     professionalFrameBrand = "";
   }
   var explicitProfessionalCatalog = (
-    path.indexOf("/silhouette/") === 0 &&
-    audienceParams.get("audience") === "professional" &&
-    audienceParams.get("embedded") === "1"
+    path.indexOf("/silhouette/") === 0 && (
+      professionalFrameBrand === "silhouette" || (
+        audienceParams.get("audience") === "professional" &&
+        audienceParams.get("embedded") === "1"
+      )
+    )
   ) || (
     professionalFrameBrand === "alfred-kerbs" &&
     path.indexOf("/alfred-kerbs/") === 0
@@ -80,7 +83,7 @@
   if (!document.querySelector("link[data-roraima-audience-css]")) {
     var stylesheet = document.createElement("link");
     stylesheet.rel = "stylesheet";
-    stylesheet.href = "/assets/roraima-audience.css?v=20260830-b2b-map-1";
+    stylesheet.href = "/assets/roraima-audience.css?v=20261008-collapsible-1";
     stylesheet.dataset.roraimaAudienceCss = "true";
     document.head.appendChild(stylesheet);
   }
@@ -172,9 +175,27 @@
     var rail = document.createElement("nav");
     rail.className = "roraima-b2c-rail";
     rail.setAttribute("aria-label", "Acciones para consumidor");
-    rail.innerHTML = '<a class="roraima-b2c-rail__consumer" href="/silhouette/#/catalogo" data-analytics-event="consumer_catalog" data-analytics-brand="silhouette" data-analytics-route="/silhouette/#/catalogo">Ver catálogo como consumidor</a>' +
+    rail.dataset.expanded = "false";
+    rail.innerHTML = '<button class="roraima-b2c-rail__toggle" type="button" aria-expanded="false" aria-controls="roraima-b2c-rail-actions" aria-label="Mostrar opciones del catálogo"><span>Opciones</span><span class="roraima-b2c-rail__chevron" aria-hidden="true"></span></button>' +
+      '<div class="roraima-b2c-rail__actions" id="roraima-b2c-rail-actions" hidden>' +
+      '<a class="roraima-b2c-rail__consumer" href="/silhouette/#/catalogo" data-analytics-event="consumer_catalog" data-analytics-brand="silhouette" data-analytics-route="/silhouette/#/catalogo">Ver catálogo como consumidor</a>' +
       '<a class="roraima-find-optician" href="' + officialLocator + '" data-analytics-event="find_optician_click" data-analytics-brand="silhouette" data-analytics-route="/opticas/">Encontrar mi óptica</a>' +
-      '<a class="roraima-b2c-rail__professional" href="' + professionalRoute + '" data-analytics-event="professional_distribution" data-analytics-brand="silhouette" data-analytics-route="' + professionalRoute + '">Soy una óptica profesional · Quiero distribuir</a>';
+      '<a class="roraima-b2c-rail__professional" href="' + professionalRoute + '" data-analytics-event="professional_distribution" data-analytics-brand="silhouette" data-analytics-route="' + professionalRoute + '">Soy una óptica profesional · Quiero distribuir</a></div>';
+    var toggle = rail.querySelector(".roraima-b2c-rail__toggle");
+    var actions = rail.querySelector(".roraima-b2c-rail__actions");
+    toggle.addEventListener("click", function () {
+      var expanded = toggle.getAttribute("aria-expanded") !== "true";
+      toggle.setAttribute("aria-expanded", String(expanded));
+      toggle.setAttribute("aria-label", expanded ? "Ocultar opciones del catálogo" : "Mostrar opciones del catálogo");
+      rail.dataset.expanded = String(expanded);
+      actions.hidden = !expanded;
+    });
+    rail.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && rail.dataset.expanded === "true") {
+        toggle.click();
+        toggle.focus();
+      }
+    });
     document.body.appendChild(rail);
   }
 
