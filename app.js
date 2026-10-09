@@ -75,9 +75,29 @@
   const showcaseProducts = window.RORAIMA_SHOWCASE_PRODUCTS?.brands || {};
   const escapeAttribute = (value) => escapeHtml(value).replaceAll("`", "&#96;");
 
+  // Reuse the nine verified models already featured below on this same page.
+  const newAlfredProducts = [...document.querySelectorAll("#alfred-novedades .alfred-new-home__models > a")]
+    .map((card) => {
+      const route = card.dataset.brandRoute || "";
+      const asset = card.querySelector("img")?.dataset.brandAsset || "";
+      if (!route.startsWith("alfred-kerbs:") || !asset.startsWith("alfred-kerbs:")) return null;
+      return {
+        name: card.querySelector("strong")?.textContent?.trim() || "",
+        meta: "Óptica",
+        path: route.slice("alfred-kerbs:".length),
+        image: `/${asset.slice("alfred-kerbs:".length)}`,
+        isNew: true,
+      };
+    })
+    .filter((product) => product?.name);
+
   document.querySelectorAll("[data-product-carousel]").forEach((carousel) => {
     const brand = carousel.dataset.productCarousel;
-    const products = showcaseProducts[brand] || [];
+    const existingProducts = showcaseProducts[brand] || [];
+    const newPaths = new Set(newAlfredProducts.map((product) => product.path.replace(/\/$/, "")));
+    const products = brand === "alfred-kerbs"
+      ? [...newAlfredProducts, ...existingProducts.filter((product) => !newPaths.has(product.path.replace(/\/$/, "")))]
+      : existingProducts;
     const track = carousel.querySelector("[data-product-track]");
     const previous = carousel.querySelector("[data-product-prev]");
     const next = carousel.querySelector("[data-product-next]");
@@ -88,6 +108,7 @@
     track.innerHTML = products.map((product) => `
       <a class="product-preview" href="${escapeAttribute(brandRouteDestination(brand, product.path))}">
         <span class="product-preview-media">
+          ${product.isNew ? '<span class="product-preview-new">Nuevo</span>' : ""}
           <img src="${escapeAttribute(brandDestination(brand, product.image))}" alt="${escapeAttribute(`${product.name} · ${brandLabels[brand] || brand}`)}" loading="lazy">
         </span>
         <span class="product-preview-copy">
