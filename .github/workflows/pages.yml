@@ -22,9 +22,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Generar artículos Silhouette cuya fecha haya llegado
+        run: node scripts/publish-silhouette-blog.mjs
+      - name: Preparar archivos públicos sin artículos programados
+        run: |
+          mkdir -p .site-artifact
+          rsync -a --exclude='/.git/' --exclude='/.github/' --exclude='/content/' --exclude='/scripts/' --exclude='/silhouette/assets/local-blog-preview.js' --exclude='/.site-artifact/' ./ .site-artifact/
+          sed -i '/local-blog-preview.js/d' .site-artifact/silhouette/index.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: .site-artifact
       - id: deployment
         uses: actions/deploy-pages@v4

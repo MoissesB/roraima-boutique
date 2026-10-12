@@ -1,0 +1,47 @@
+.sil-blog-content figure {
+  margin: 48px 0 58px;
+}
+
+.sil-blog-content figure img {
+  display: block;
+  width: 100%;
+  max-height: 680px;
+  object-fit: cover;
+}
+
+.sil-blog-content figcaption {
+  margin-top: 12px;
+  color: #777;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.sil-blog-content blockquote {
+  font-size: 18px !important;
+  line-height: 1.6;
+}
+
+.sil-blog-content blockquote strong {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 11px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+
+.sil-blog-content a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 650px) {
+  .sil-blog-content figure {
+    margin: 38px 0 44px;
+  }
+
+  .sil-blog-content blockquote {
+    padding: 22px !important;
+    font-size: 16px !important;
+  }
+}
