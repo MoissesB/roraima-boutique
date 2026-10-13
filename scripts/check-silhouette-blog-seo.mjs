@@ -42,6 +42,7 @@ for (const post of posts) {
   }
 
   const html = await readFile(path, 'utf8');
+  assert(!html.includes('itemscope'), `${post.slug}: duplicate microdata declaration`);
   assert(html.includes(`<title>${post.seoTitle}</title>`), `${post.slug}: SEO title`);
   assert.equal(tag(html, 'description'), post.seoDescription);
   assert(html.includes(`<link rel="canonical" href="${url}">`), `${post.slug}: canonical URL`);

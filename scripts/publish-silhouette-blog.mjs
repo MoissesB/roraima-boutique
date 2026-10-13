@@ -109,10 +109,10 @@ function htmlPage(post) {
 </head>
 <body>
   <header class="site-header"><a class="roraima" href="${site}/">RORAIMA <span>DISTRIBUCIONES</span></a><a class="brand" href="${site}/silhouette/">Silhouette</a><nav><a href="${site}/silhouette/">Colección</a><a href="../">Blog</a></nav></header>
-  <main><article itemscope itemtype="https://schema.org/BlogPosting">
-    <header class="article-header"><p class="eyebrow">SILHOUETTE · DISEÑO Y TECNOLOGÍA</p><h1 itemprop="headline">${escapeHtml(post.title)}</h1><p class="excerpt">${escapeHtml(post.excerpt)}</p><time datetime="${publishedLocal}" itemprop="datePublished">${escapeHtml(dateLabel)}</time></header>
+  <main><article>
+    <header class="article-header"><p class="eyebrow">SILHOUETTE · DISEÑO Y TECNOLOGÍA</p><h1>${escapeHtml(post.title)}</h1><p class="excerpt">${escapeHtml(post.excerpt)}</p><time datetime="${publishedLocal}">${escapeHtml(dateLabel)}</time></header>
     <figure class="hero"><img src="${escapeHtml(post.image)}" alt="${escapeHtml(post.imageAlt)}"><figcaption>Imagen oficial de Silhouette.</figcaption></figure>
-    <div class="article-content" itemprop="articleBody">${post.content}</div>
+    <div class="article-content">${post.content}</div>
   </article></main>
   <footer><a href="../">Más artículos Silhouette</a><span>Distribuidora Roraima · México</span></footer>
 </body></html>
