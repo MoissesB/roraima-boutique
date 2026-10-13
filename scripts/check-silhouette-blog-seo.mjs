@@ -18,6 +18,10 @@ for (const field of ['seoTitle', 'seoDescription', 'socialTitle', 'socialDescrip
 }
 
 const sitemap = await readFile(join(root, 'sitemap.xml'), 'utf8');
+const blogIndex = await readFile(join(outputDir, 'index.html'), 'utf8');
+for (const logo of ['/silhouette/roraima-logo-on-light-v5.png', '/silhouette/brand/silhouette-on-light.png']) {
+  assert(blogIndex.includes(logo), `Blog index is missing ${logo}`);
+}
 const manifestSource = await readFile(join(outputDir, 'published-posts.js'), 'utf8');
 const manifest = JSON.parse(manifestSource.replace(/^window\.__silhouettePublishedPosts=/, '').replace(/;\s*$/, ''));
 const due = posts.filter(post => new Date(post.publishAt) <= now);
@@ -42,6 +46,9 @@ for (const post of posts) {
   }
 
   const html = await readFile(path, 'utf8');
+  for (const logo of ['/silhouette/roraima-logo-on-light-v5.png', '/silhouette/brand/silhouette-on-light.png']) {
+    assert(html.includes(logo), `${post.slug}: missing ${logo}`);
+  }
   assert(!html.includes('itemscope'), `${post.slug}: duplicate microdata declaration`);
   assert(html.includes(`<title>${post.seoTitle}</title>`), `${post.slug}: SEO title`);
   assert.equal(tag(html, 'description'), post.seoDescription);
