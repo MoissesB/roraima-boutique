@@ -29,6 +29,8 @@ jobs:
           node-version: '24'
       - name: Revisar fechas y generar páginas públicas
         run: node scripts/publish-silhouette-blog.mjs
+      - name: Validar SEO y publicación
+        run: node scripts/check-silhouette-blog-seo.mjs
       - name: Detectar artículos nuevos
         id: changes
         shell: bash

@@ -36,10 +36,14 @@ const prepared = [];
 for (const article of articles) {
   const slug = String(article.slug || '').trim();
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) throw new Error(`Invalid slug: ${slug}`);
-  for (const field of ['title', 'excerpt', 'content', 'image', 'publishAtMexico', 'seoTitle', 'seoDescription']) {
+  for (const field of ['title', 'excerpt', 'content', 'image', 'imageAlt', 'publishAtMexico', 'seoTitle', 'seoDescription', 'socialTitle', 'socialDescription', 'socialImage', 'socialImageAlt']) {
     if (typeof article[field] !== 'string' || !article[field].trim()) throw new Error(`${slug}: missing ${field}`);
   }
   if (!/^https:\/\//.test(article.image)) throw new Error(`${slug}: image must use HTTPS`);
+  if (!/^https:\/\//.test(article.socialImage)) throw new Error(`${slug}: social image must use HTTPS`);
+  if (!Number.isInteger(article.socialImageWidth) || article.socialImageWidth < 600 || !Number.isInteger(article.socialImageHeight) || article.socialImageHeight < 300) {
+    throw new Error(`${slug}: invalid social image dimensions`);
+  }
   if (/<\s*(script|iframe|object|embed|form)\b|\bon[a-z]+\s*=|javascript:/i.test(article.content)) {
     throw new Error(`${slug}: unsupported HTML`);
   }
@@ -50,11 +54,14 @@ for (const article of articles) {
     path: filename,
     article: {
       status: 'scheduled', slug, title: article.title, excerpt: article.excerpt,
-      content: article.content, image: article.image,
+      content: article.content, image: article.image, imageAlt: article.imageAlt,
       publishAtMexico: article.publishAtMexico,
       timeZone: 'America/Mexico_City',
       publishAt: toUtc(article.publishAtMexico),
       seoTitle: article.seoTitle, seoDescription: article.seoDescription,
+      socialTitle: article.socialTitle, socialDescription: article.socialDescription,
+      socialImage: article.socialImage, socialImageAlt: article.socialImageAlt,
+      socialImageWidth: article.socialImageWidth, socialImageHeight: article.socialImageHeight,
     },
   });
 }

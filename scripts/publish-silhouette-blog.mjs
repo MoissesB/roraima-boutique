@@ -29,17 +29,24 @@ function mexicoLocal(instant) {
 
 function validate(post, filename) {
   if (!post || typeof post !== 'object') throw new Error(`${filename}: invalid article`);
-  for (const field of ['slug', 'title', 'excerpt', 'content', 'image', 'publishAt', 'publishAtMexico', 'seoTitle', 'seoDescription']) {
+  for (const field of ['slug', 'title', 'excerpt', 'content', 'image', 'imageAlt', 'publishAt', 'publishAtMexico', 'seoTitle', 'seoDescription', 'socialTitle', 'socialDescription', 'socialImage', 'socialImageAlt']) {
     if (typeof post[field] !== 'string' || !post[field].trim()) throw new Error(`${filename}: missing ${field}`);
   }
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(post.slug)) throw new Error(`${filename}: invalid slug`);
   if (post.status !== 'scheduled') throw new Error(`${filename}: status must be scheduled`);
   if (post.timeZone !== zone) throw new Error(`${filename}: timeZone must be ${zone}`);
   if (!/^https:\/\//.test(post.image)) throw new Error(`${filename}: cover image must use HTTPS`);
+  if (!/^https:\/\//.test(post.socialImage)) throw new Error(`${filename}: social image must use HTTPS`);
+  if (!Number.isInteger(post.socialImageWidth) || post.socialImageWidth < 600 || !Number.isInteger(post.socialImageHeight) || post.socialImageHeight < 300) {
+    throw new Error(`${filename}: invalid social image dimensions`);
+  }
   if (!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/.test(post.publishAt)) throw new Error(`${filename}: publishAt must be UTC ISO time`);
   const published = new Date(post.publishAt);
   if (Number.isNaN(published.getTime()) || mexicoLocal(published) !== post.publishAtMexico) {
     throw new Error(`${filename}: Mexico time does not match UTC publishAt`);
+  }
+  if (post.modifiedAt && (!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/.test(post.modifiedAt) || new Date(post.modifiedAt).getTime() < published.getTime())) {
+    throw new Error(`${filename}: invalid modifiedAt`);
   }
   if (/<\s*(script|iframe|object|embed|form)\b|\bon[a-z]+\s*=|javascript:/i.test(post.content)) {
     throw new Error(`${filename}: article contains unsupported HTML`);
@@ -54,10 +61,14 @@ function htmlPage(post) {
   const zoneName = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'longOffset' })
     .formatToParts(published).find(part => part.type === 'timeZoneName').value;
   const publishedLocal = `${post.publishAtMexico}${zoneName.replace('GMT', '')}`;
+  const modified = new Date(post.modifiedAt || post.publishAt);
+  const modifiedZoneName = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'longOffset' })
+    .formatToParts(modified).find(part => part.type === 'timeZoneName').value;
+  const modifiedLocal = `${mexicoLocal(modified)}${modifiedZoneName.replace('GMT', '')}`;
   const metadata = {
     '@context': 'https://schema.org', '@type': 'BlogPosting',
     headline: post.title, description: post.seoDescription, image: [post.image],
-    datePublished: publishedLocal, dateModified: publishedLocal, inLanguage: 'es-MX',
+    datePublished: publishedLocal, dateModified: modifiedLocal, inLanguage: 'es-MX',
     mainEntityOfPage: url,
     author: { '@type': 'Organization', name: 'Distribuidora Roraima', url: site },
     publisher: { '@type': 'Organization', name: 'Distribuidora Roraima', url: site },
@@ -77,12 +88,22 @@ function htmlPage(post) {
   <meta property="og:type" content="article">
   <meta property="og:locale" content="es_MX">
   <meta property="og:site_name" content="Roraima Distribuciones · Silhouette México">
-  <meta property="og:title" content="${escapeHtml(post.seoTitle)}">
-  <meta property="og:description" content="${escapeHtml(post.seoDescription)}">
+  <meta property="og:title" content="${escapeHtml(post.socialTitle)}">
+  <meta property="og:description" content="${escapeHtml(post.socialDescription)}">
   <meta property="og:url" content="${url}">
-  <meta property="og:image" content="${escapeHtml(post.image)}">
+  <meta property="og:image" content="${escapeHtml(post.socialImage)}">
+  <meta property="og:image:secure_url" content="${escapeHtml(post.socialImage)}">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="${post.socialImageWidth}">
+  <meta property="og:image:height" content="${post.socialImageHeight}">
+  <meta property="og:image:alt" content="${escapeHtml(post.socialImageAlt)}">
   <meta property="article:published_time" content="${publishedLocal}">
+  <meta property="article:modified_time" content="${modifiedLocal}">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${escapeHtml(post.socialTitle)}">
+  <meta name="twitter:description" content="${escapeHtml(post.socialDescription)}">
+  <meta name="twitter:image" content="${escapeHtml(post.socialImage)}">
+  <meta name="twitter:image:alt" content="${escapeHtml(post.socialImageAlt)}">
   <link rel="stylesheet" href="../silhouette-blog.css">
   <script type="application/ld+json">${JSON.stringify(metadata).replace(/</g, '\\u003c')}</script>
 </head>
@@ -90,7 +111,7 @@ function htmlPage(post) {
   <header class="site-header"><a class="roraima" href="${site}/">RORAIMA <span>DISTRIBUCIONES</span></a><a class="brand" href="${site}/silhouette/">Silhouette</a><nav><a href="${site}/silhouette/">Colección</a><a href="../">Blog</a></nav></header>
   <main><article itemscope itemtype="https://schema.org/BlogPosting">
     <header class="article-header"><p class="eyebrow">SILHOUETTE · DISEÑO Y TECNOLOGÍA</p><h1 itemprop="headline">${escapeHtml(post.title)}</h1><p class="excerpt">${escapeHtml(post.excerpt)}</p><time datetime="${publishedLocal}" itemprop="datePublished">${escapeHtml(dateLabel)}</time></header>
-    <figure class="hero"><img src="${escapeHtml(post.image)}" alt="${escapeHtml(post.title)}" width="1440" height="700"><figcaption>Imagen oficial de Silhouette.</figcaption></figure>
+    <figure class="hero"><img src="${escapeHtml(post.image)}" alt="${escapeHtml(post.imageAlt)}"><figcaption>Imagen oficial de Silhouette.</figcaption></figure>
     <div class="article-content" itemprop="articleBody">${post.content}</div>
   </article></main>
   <footer><a href="../">Más artículos Silhouette</a><span>Distribuidora Roraima · México</span></footer>
@@ -124,7 +145,7 @@ await mkdir(outputDir, { recursive: true });
 const manifest = due.map(post => ({
   id: post.id, slug: post.slug, title: post.title, excerpt: post.excerpt,
   content: post.content, image: post.image, status: 'published',
-  createdAt: post.publishAt, updatedAt: post.publishAt,
+  createdAt: post.publishAt, updatedAt: post.modifiedAt || post.publishAt,
 }));
 await writeFile(join(outputDir, 'published-posts.js'), `window.__silhouettePublishedPosts=${JSON.stringify(manifest).replace(/</g, '\\u003c')};\n`);
 if (due.length) {
@@ -138,9 +159,11 @@ if (due.length) {
   let sitemap = await readFile(sitemapPath, 'utf8');
   const urls = [`${site}/silhouette/blog/`, ...due.map(post => `${site}/silhouette/blog/${post.slug}/`)];
   for (const url of urls) {
-    if (sitemap.includes(`<loc>${url}</loc>`)) continue;
-    const lastmod = url.endsWith('/blog/') ? mexicoLocal(now).slice(0, 10) : mexicoLocal(new Date(due.find(post => url.includes(`/${post.slug}/`)).publishAt)).slice(0, 10);
-    sitemap = sitemap.replace('</urlset>', `  <url><loc>${url}</loc><lastmod>${lastmod}</lastmod></url>\n</urlset>`);
+    const post = due.find(item => url === `${site}/silhouette/blog/${item.slug}/`);
+    const lastmod = mexicoLocal(new Date(post ? post.modifiedAt || post.publishAt : due[0].modifiedAt || due[0].publishAt)).slice(0, 10);
+    const oldEntry = sitemap.match(new RegExp(`<url><loc>${url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}</loc><lastmod>\\d{4}-\\d{2}-\\d{2}</lastmod></url>`));
+    if (oldEntry) sitemap = sitemap.replace(oldEntry[0], `<url><loc>${url}</loc><lastmod>${lastmod}</lastmod></url>`);
+    else sitemap = sitemap.replace('</urlset>', `  <url><loc>${url}</loc><lastmod>${lastmod}</lastmod></url>\n</urlset>`);
   }
   await writeFile(sitemapPath, sitemap);
 }
