@@ -48,10 +48,10 @@ html[data-sil-consumer="true"] { scroll-behavior: smooth; }
 .sil-c-video-caption { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 22px; padding: 24px clamp(24px, 4vw, 46px); }
 .sil-c-video-caption span { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(21px, 2.2vw, 29px); }
 .sil-c-video-caption .sil-c-button { min-height: 44px; }
-.sil-c-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px; margin-top: 35px; }
+.sil-c-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; margin-top: 35px; }
 .sil-c-card { display: block; color: #202020; border: 1px solid #eaeaea; background: #fff; transition: box-shadow .25s, transform .25s; }
 .sil-c-card:hover { box-shadow: 0 24px 54px #0002; transform: translateY(-4px); }
-.sil-c-card img { display: block; width: 100%; height: 350px; object-fit: contain; background: #f8f8f8; }
+.sil-c-card img { display: block; width: 100%; height: 310px; object-fit: contain; background: #f8f8f8; }
 .sil-c-card div { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 24px; }
 .sil-c-card strong { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(25px, 2.7vw, 36px); font-weight: 400; }
 .sil-c-card span { color: #6b5948; font-size: 11px; font-weight: 600; letter-spacing: .15em; text-transform: uppercase; }
@@ -64,16 +64,25 @@ html[data-sil-consumer="true"] { scroll-behavior: smooth; }
 .sil-c-steps-grid h3 { margin: 15px 0 10px; font-size: 27px; }
 .sil-c-steps-grid p { margin: 0; color: #ccc; font-size: 14px; }
 .sil-c-steps .sil-c-button { background: #fff; color: #111; border-color: #fff; }
-.sil-c-faq { max-width: 960px; }
+.sil-c-faq { max-width: 1300px; }
+.sil-c-faq-layout { display: grid; grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); align-items: start; gap: clamp(28px, 5vw, 75px); margin-top: 48px; }
+.sil-c-faq-tabs { display: grid; gap: 8px; }
+.sil-c-faq-tabs button { width: 100%; padding: 15px 18px; color: #555; background: #f8f8f8; border: 1px solid #e7e7e7; text-align: left; font-size: 13px; }
+.sil-c-faq-tabs button[aria-selected="true"] { color: #1d1d1f; background: #f5f0ea; border-color: var(--sil-gold); }
+.sil-c-faq-panels [role="tabpanel"][hidden] { display: none; }
+.sil-c-faq-panels h3 { margin: 0 0 20px; font-size: clamp(26px, 3vw, 38px); }
 .sil-c-faq details { border-top: 1px solid #ddd; padding: 23px 0; }
 .sil-c-faq details:last-child { border-bottom: 1px solid #ddd; }
 .sil-c-faq summary { cursor: pointer; font-family: 'Playfair Display', Georgia, serif; font-size: 23px; }
 .sil-c-faq details p { margin: 17px 0 0; color: #666; font-size: 14px; }
+.sil-c-faq-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 24px; margin-top: 42px; }
+.sil-c-faq-actions .sil-c-text-link { margin: 0; }
 .sil-c-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 18px; padding: 32px clamp(22px, 5vw, 65px); color: #aaa; background: #0b0b0b; font-size: 12px; }
 .sil-c-footer a { color: #fff; text-decoration: underline !important; }
 .sil-c-consent { position: fixed; z-index: 3000; left: 18px; right: 18px; bottom: 18px; max-width: 720px; margin: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 18px 22px; color: #1d1d1c; background: #fff; border: 1px solid #d3d1c9; box-shadow: 0 8px 35px #0002; font-size: 12px; line-height: 1.5; }
 .sil-c-consent p { flex: 1 1 300px; margin: 0; }
 .sil-c-consent button { padding: 10px 13px; border: 1px solid #1d1d1c; background: #fff; cursor: pointer; font: inherit; }
 .sil-c-consent button[data-consent="yes"] { background: #1d1d1c; color: #fff; }
+@media (max-width: 900px) { .sil-c-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .sil-c-faq-layout { grid-template-columns: 1fr; } .sil-c-faq-tabs { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 800px) { .sil-c-nav { display: none; } .sil-c-menu-toggle { display: block; } .sil-c-video-caption { justify-content: center; text-align: center; } .sil-c-steps-grid { gap: 20px; } }
-@media (max-width: 650px) { .sil-c-brand img { height: 38px; } .sil-c-hero { padding: 120px 22px 70px; } .sil-c-hero h1 { font-size: clamp(44px, 12vw, 65px); } .sil-c-hero .sil-c-actions, .sil-c-hero .sil-c-button { width: 100%; } .sil-c-section { padding: 76px 20px; } .sil-c-grid, .sil-c-steps-grid { grid-template-columns: 1fr; } .sil-c-card img { height: 260px; } .sil-c-video-caption .sil-c-actions, .sil-c-video-caption .sil-c-button { width: 100%; } .sil-c-footer { display: block; line-height: 2; } }
+@media (max-width: 650px) { .sil-c-brand img { height: 38px; } .sil-c-hero { padding: 120px 22px 70px; } .sil-c-hero h1 { font-size: clamp(44px, 12vw, 65px); } .sil-c-hero .sil-c-actions, .sil-c-hero .sil-c-button { width: 100%; } .sil-c-section { padding: 76px 20px; } .sil-c-grid, .sil-c-steps-grid, .sil-c-faq-tabs { grid-template-columns: 1fr; } .sil-c-card img { height: 260px; } .sil-c-faq summary { font-size: 20px; } .sil-c-video-caption .sil-c-actions, .sil-c-video-caption .sil-c-button { width: 100%; } .sil-c-faq-actions .sil-c-button { width: 100%; } .sil-c-footer { display: block; line-height: 2; } }
