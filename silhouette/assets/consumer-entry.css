@@ -1,0 +1,50 @@
+html[data-sil-consumer="true"] #app { display: none; }
+#sil-consumer-root[hidden] { display: none !important; }
+#sil-consumer-root { color: #191918; background: #f7f6f2; font-family: Inter, Arial, sans-serif; }
+#sil-consumer-root * { box-sizing: border-box; }
+#sil-consumer-root a { text-decoration: none; }
+.sil-c-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px clamp(20px, 5vw, 86px); background: #fbfaf7; border-bottom: 1px solid #e8e4dc; }
+.sil-c-brand { color: #171716; font-family: Georgia, serif; font-size: 28px; font-style: italic; letter-spacing: -.08em; white-space: nowrap; }
+.sil-c-nav { display: flex; align-items: center; gap: clamp(16px, 3vw, 42px); }
+.sil-c-nav a { color: #33322f; font-size: 12px; letter-spacing: .09em; text-transform: uppercase; }
+.sil-c-nav a:hover, .sil-c-text-link:hover { text-decoration: underline; text-underline-offset: 4px; }
+.sil-c-hero { display: grid; grid-template-columns: minmax(0, .94fr) minmax(0, 1.06fr); min-height: 660px; background: #e9e8e3; }
+.sil-c-hero-copy { padding: clamp(64px, 8vw, 128px) clamp(24px, 7vw, 110px) 70px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
+.sil-c-eyebrow { margin: 0 0 27px; color: #8e755c; font-size: 11px; font-weight: 700; letter-spacing: .28em; text-transform: uppercase; }
+.sil-c-hero h1 { max-width: 680px; margin: 0; font-family: Georgia, serif; font-size: clamp(48px, 6vw, 90px); font-weight: 400; letter-spacing: -.062em; line-height: .99; }
+.sil-c-lead { max-width: 510px; margin: 30px 0 34px; color: #5f5f59; font-size: clamp(15px, 1.35vw, 18px); line-height: 1.7; }
+.sil-c-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.sil-c-button { display: inline-flex; align-items: center; justify-content: center; min-height: 51px; padding: 14px 23px; border: 1px solid #1d1d1c; color: #fff; background: #1d1d1c; font-size: 11px; font-weight: 700; letter-spacing: .13em; text-align: center; text-transform: uppercase; transition: transform .2s, background .2s; }
+.sil-c-button:hover { background: #454440; transform: translateY(-2px); }
+.sil-c-button--light { color: #1d1d1c; background: transparent; }
+.sil-c-button--light:hover { background: #fff; }
+.sil-c-hero-image { min-height: 540px; display: flex; align-items: center; background: #fff; overflow: hidden; }
+.sil-c-hero-image img { width: 100%; height: 100%; object-fit: contain; }
+.sil-c-note { margin-top: 25px; color: #77746e; font-size: 12px; line-height: 1.5; }
+.sil-c-section { max-width: 1280px; margin: 0 auto; padding: 100px clamp(20px, 5vw, 64px); }
+.sil-c-section-head { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 36px; }
+.sil-c-section h2 { max-width: 750px; margin: 0; font-family: Georgia, serif; font-size: clamp(36px, 4.1vw, 61px); font-weight: 400; letter-spacing: -.045em; line-height: 1.08; }
+.sil-c-text-link { color: #1d1d1c; border-bottom: 1px solid #1d1d1c; padding-bottom: 4px; font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; white-space: nowrap; }
+.sil-c-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.sil-c-card { display: block; color: #222; background: #fff; }
+.sil-c-card img { display: block; width: 100%; aspect-ratio: 1.55; object-fit: contain; background: #fff; }
+.sil-c-card div { display: flex; justify-content: space-between; gap: 15px; align-items: center; padding: 25px 27px; border-top: 1px solid #f0eeea; }
+.sil-c-card strong { font-family: Georgia, serif; font-size: clamp(24px, 2.5vw, 34px); font-weight: 400; }
+.sil-c-card span { font-size: 24px; }
+.sil-c-steps { background: #20211f; color: #fff; }
+.sil-c-steps .sil-c-section { padding-top: 92px; padding-bottom: 92px; }
+.sil-c-steps .sil-c-eyebrow { color: #cbb89e; }
+.sil-c-steps-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px; margin: 48px 0 38px; }
+.sil-c-steps-grid article { border-top: 1px solid #777872; padding-top: 22px; }
+.sil-c-steps-grid span { color: #cbb89e; font-size: 12px; letter-spacing: .15em; }
+.sil-c-steps-grid h3 { margin: 18px 0 10px; font-family: Georgia, serif; font-size: 25px; font-weight: 400; }
+.sil-c-steps-grid p { margin: 0; color: #c9c9c4; font-size: 14px; line-height: 1.65; }
+.sil-c-steps .sil-c-button { background: #fff; color: #171716; border-color: #fff; }
+.sil-c-footer { display: flex; justify-content: space-between; gap: 20px; padding: 35px clamp(20px, 5vw, 86px); background: #f7f6f2; color: #686760; font-size: 12px; }
+.sil-c-footer a { color: #44433d; }
+.sil-c-consent { position: fixed; z-index: 9999; left: 18px; right: 18px; bottom: 18px; max-width: 720px; margin: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 18px 22px; color: #1d1d1c; background: #fff; border: 1px solid #d3d1c9; box-shadow: 0 8px 35px #0002; font-size: 12px; line-height: 1.5; }
+.sil-c-consent p { flex: 1 1 300px; margin: 0; }
+.sil-c-consent button { padding: 10px 13px; border: 1px solid #1d1d1c; background: #fff; cursor: pointer; font: inherit; }
+.sil-c-consent button[data-consent="yes"] { background: #1d1d1c; color: #fff; }
+@media (max-width: 850px) { .sil-c-hero { grid-template-columns: 1fr; } .sil-c-hero-copy { padding: 62px 23px 45px; } .sil-c-hero-image { min-height: 330px; max-height: 490px; } .sil-c-section { padding-top: 70px; padding-bottom: 70px; } .sil-c-section-head { display: block; } .sil-c-section-head .sil-c-text-link { display: inline-block; margin-top: 23px; } }
+@media (max-width: 600px) { .sil-c-header { padding: 17px 20px; } .sil-c-nav { gap: 15px; } .sil-c-nav a { font-size: 10px; } .sil-c-brand { font-size: 23px; } .sil-c-hero h1 { font-size: clamp(45px, 13vw, 66px); } .sil-c-hero-image { min-height: 260px; max-height: 350px; } .sil-c-actions, .sil-c-actions a { width: 100%; } .sil-c-grid, .sil-c-steps-grid { grid-template-columns: 1fr; } .sil-c-steps-grid { gap: 24px; } .sil-c-card div { padding: 20px; } .sil-c-footer { display: block; line-height: 1.8; } }

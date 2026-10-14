@@ -18,7 +18,12 @@
     <script>
       window.__RORAIMA_SILHOUETTE_BASE__ = new URL("./", window.location.href).pathname;
       window.__RORAIMA_PORTAL_BASE__ = new URL("../", window.location.href).href.replace(/\/+$/, "");
+      if (window.location.hash.replace(/\?.*$/, "") === "#/para-ti") {
+        document.documentElement.dataset.silConsumer = "true";
+      }
     </script>
+    <link rel="stylesheet" href="./assets/consumer-entry.css?v=20261014-1">
+    <script defer src="./assets/consumer-entry.js?v=20261014-1"></script>
     <script src="./assets/translation-observer-guard.js?v=20260817-performance-v2"></script>
     <script>document.write('<script src="./blog/published-posts.js?cb=' + Date.now() + '"><\/script>');</script>
     <script defer src="./assets/blog-canonical-links.js?v=20261013-seo"></script>
