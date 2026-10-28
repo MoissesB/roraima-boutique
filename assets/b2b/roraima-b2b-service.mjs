@@ -12,7 +12,8 @@ import {
   normalizeOrderState,
   parseLegacyStorage,
   replaceBrandCart,
-} from "./order-core.mjs";
+} from "./order-core.mjs?v=20261028-stock-1";
+import { apiItem, createOdooClient } from "./odoo-client.mjs?v=20261028-stock-1";
 
 function createId(prefix = "id") {
   if (globalThis.crypto?.randomUUID) return `${prefix}-${globalThis.crypto.randomUUID()}`;
@@ -115,6 +116,18 @@ export function createRoraimaB2BService({
   let writeChain = Promise.resolve();
   let authSubscription = null;
   const subscribers = new Set();
+  // Odoo mode: the cart stays in this browser; account, stock and checkout
+  // come from the roraima_portal_api module.
+  let odooClient = null;
+  let account = { status: "unknown", user: null, error: null };
+  let stock = { status: "idle", byKey: {}, error: null };
+  let checkout = { status: "idle", order: null, error: null, code: null, lines: null };
+  let stockTimer = null;
+  let stockSequence = 0;
+  // Lines taken out of the cart because Odoo cannot supply them (unknown
+  // reference, or no stock for a brand without backorder). Shown once.
+  let removed = [];
+  let checkoutInFlight = null;
 
   function localMockMode() {
     return config.mode === "mock"
@@ -126,8 +139,14 @@ export function createRoraimaB2BService({
       && /^(localhost|127\.0\.0\.1|roraimamx\.com|www\.roraimamx\.com)$/.test(globalObject?.location?.hostname || "");
   }
 
+  function odooMode() {
+    return config.mode === "odoo" && Boolean(config.apiBaseUrl);
+  }
+
   function mockRepository() {
-    const key = visualPreviewMode()
+    // Odoo mode keeps the same local draft as the visual preview, so a
+    // selection made before the API went live is not lost.
+    const key = visualPreviewMode() || odooMode()
       ? "roraima-b2b-visual-draft-v1"
       : "roraima-b2b-mock-draft-v1";
     return {
@@ -147,6 +166,12 @@ export function createRoraimaB2BService({
       error,
       session,
       submission,
+      mode: odooMode() ? "odoo" : (visualPreviewMode() ? "visual-preview" : config.mode || "supabase"),
+      account: clone(account),
+      stock: clone(stock),
+      checkout: clone(checkout),
+      removed: clone(removed),
+      minimumPerBrand: Number(account.user?.min_per_brand) || 50,
       state: clone(state),
       totals: Object.fromEntries([
         ...ORDER_BRANDS.map((brand) => [brand, cartCount(state, brand)]),
@@ -190,8 +215,9 @@ export function createRoraimaB2BService({
     setStatus("loading");
     const remote = await repository.load(session.user.id);
     state = normalizeOrderState(remote, session.user.id);
-    // The public visual preview must not consume or clear existing catalog carts.
-    const legacyEntries = visualPreviewMode() ? [] : parseLegacyStorage(storage);
+    // The public visual preview (and the Odoo mode, which shares its local
+    // draft) must not consume or clear existing catalog carts.
+    const legacyEntries = visualPreviewMode() || odooMode() ? [] : parseLegacyStorage(storage);
     const migration = mergeLegacyOrders(state, legacyEntries);
 
     if (migration.migratedKeys.length) {
@@ -212,13 +238,17 @@ export function createRoraimaB2BService({
     if (initializePromise) return initializePromise;
     initializePromise = (async () => {
       try {
-        if (localMockMode() || visualPreviewMode()) {
+        if (localMockMode() || visualPreviewMode() || odooMode()) {
           repository = config.repository || mockRepository();
           await loadForSession(config.session || {
             access_token: "mock-local-preview-token",
             user: { id: "00000000-0000-4000-8000-000000000001" },
           });
           initialized = true;
+          if (odooMode()) {
+            odooClient = odooClient || createOdooClient({ baseUrl: config.apiBaseUrl });
+            refreshAccount().catch(() => undefined);
+          }
           return snapshot();
         }
         const client = await resolveSupabaseClient(config, globalObject);
@@ -265,7 +295,9 @@ export function createRoraimaB2BService({
         try {
           const persisted = await repository.save(session.user.id, next);
           state = normalizeOrderState(persisted || next, session.user.id);
+          if (checkout.status !== "submitting") checkout = { status: "idle", order: null, error: null, code: null, lines: null };
           setStatus("ready");
+          scheduleStock();
           return snapshot();
         } catch (mutationError) {
           state = previous;
@@ -276,9 +308,221 @@ export function createRoraimaB2BService({
     return writeChain;
   }
 
+  function cartItems() {
+    return ORDER_BRANDS.flatMap((brand) => state.carts[brand].items);
+  }
+
+  function setAccount(next) {
+    account = { status: "unknown", user: null, error: null, ...next };
+    if (account.status !== "signed-in") stock = { status: "idle", byKey: {}, error: null };
+    notify();
+    scheduleStock();
+  }
+
+  async function refreshAccount() {
+    if (!odooClient) return snapshot();
+    try {
+      const result = await odooClient.me();
+      setAccount({ status: "signed-in", user: result.user });
+    } catch (accountError) {
+      setAccount(accountError.code === "not_authenticated"
+        ? { status: "signed-out" }
+        : { status: "unavailable", error: accountError.message });
+    }
+    return snapshot();
+  }
+
+  function scheduleStock(delay = 350) {
+    if (!odooMode()) return;
+    globalObject?.clearTimeout?.(stockTimer);
+    stockTimer = globalObject?.setTimeout?.(() => refreshStock().catch(() => undefined), delay);
+  }
+
+  async function refreshStock() {
+    if (!odooClient || account.status !== "signed-in") return stock;
+    const items = cartItems().slice(0, 200).map(apiItem);
+    if (!items.length) {
+      stock = { status: "ready", byKey: {}, error: null };
+      notify();
+      return stock;
+    }
+    const sequence = ++stockSequence;
+    stock = { ...stock, status: "loading", error: null };
+    notify();
+    try {
+      const result = await odooClient.stock(items);
+      if (sequence !== stockSequence) return stock;
+      stock = {
+        status: "ready",
+        byKey: Object.fromEntries((result.items || []).map((entry) => [entry.key, entry])),
+        error: null,
+      };
+      dropUnorderable();
+    } catch (stockError) {
+      if (sequence !== stockSequence) return stock;
+      if (stockError.code === "not_authenticated") {
+        setAccount({ status: "signed-out" });
+        return stock;
+      }
+      stock = { ...stock, status: "error", error: stockError.message };
+    }
+    notify();
+    return stock;
+  }
+
+  // A reference that is not in Odoo, or has no free stock and its brand is
+  // not supplied on order (Alfred Kerbs is), cannot stay in the cart.
+  function dropUnorderable() {
+    const rejected = cartItems().filter((item) => stock.byKey[item.key]?.orderable === false);
+    if (!rejected.length) return;
+    const keys = new Set(rejected.map((item) => item.key));
+    removed = [
+      ...removed.filter((entry) => !keys.has(entry.key)),
+      ...rejected.map((item) => ({
+        key: item.key,
+        brand: item.brand,
+        label: item.name || item.model || item.sku,
+        detail: [item.sku, item.color].filter(Boolean).join(" · "),
+        reason: stock.byKey[item.key].status === "ok" || stock.byKey[item.key].status === "needs_option"
+          ? "out_of_stock"
+          : "unknown_product",
+      })),
+    ].slice(-20);
+    enqueueMutation((current, changedAt) => {
+      for (const brand of ORDER_BRANDS) {
+        const before = current.carts[brand].items.length;
+        current.carts[brand].items = current.carts[brand].items.filter((item) => !keys.has(item.key));
+        if (current.carts[brand].items.length !== before) current.carts[brand].updatedAt = changedAt;
+      }
+      return current;
+    }).catch(() => undefined);
+  }
+
+  async function accountAction(action) {
+    if (!initialized) await initialize();
+    if (!odooClient) throw new Error("El servidor de cuentas no está configurado en este entorno.");
+    return action(odooClient);
+  }
+
+  function randomKey() {
+    if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+  }
+
+  // A double click (or two tabs of the same page) must reuse one request:
+  // concurrent calls share the in-flight promise and therefore its key.
+  function submitOdooOrder(options = {}) {
+    if (!checkoutInFlight) {
+      checkoutInFlight = runOdooCheckout(options).finally(() => { checkoutInFlight = null; });
+    }
+    return checkoutInFlight;
+  }
+
+  async function runOdooCheckout({ notes = "", reference = "" } = {}) {
+    if (!initialized) await initialize();
+    if (account.status !== "signed-in") throw new Error("Inicia sesión para enviar tu pedido.");
+    const items = cartItems().map((item) => ({ ...apiItem(item), quantity: item.quantity }));
+    if (!items.length) throw new Error("Añade al menos una referencia al pedido.");
+    const payload = {
+      items,
+      notes: String(notes || "").trim().slice(0, 1000),
+      reference: String(reference || "").trim().slice(0, 60),
+    };
+    // Same cart + same notes => same key, so a double click or a retry after a
+    // network error never creates a second order.
+    const fingerprint = stableHash(JSON.stringify(payload));
+    let key = state.submissionIntent?.fingerprint === fingerprint ? state.submissionIntent.key : "";
+    if (!key) {
+      key = `web-${randomKey()}`;
+      // Reserve the key in memory before any await, then persist it so a
+      // retry after a reload reuses it as well.
+      state.submissionIntent = { key, fingerprint };
+      const nextState = normalizeOrderState(state, session.user.id);
+      state = normalizeOrderState(await repository.save(session.user.id, nextState) || nextState, session.user.id);
+    }
+    checkout = { status: "submitting", order: null, error: null, code: null, lines: null };
+    notify();
+    try {
+      const result = await odooClient.checkout({ ...payload, idempotency_key: key });
+      const submittedAt = new Date().toISOString();
+      const nextState = normalizeOrderState(state, session.user.id);
+      for (const brand of ORDER_BRANDS) {
+        nextState.carts[brand].items = [];
+        nextState.carts[brand].updatedAt = submittedAt;
+      }
+      nextState.submissionIntent = null;
+      nextState.updatedAt = submittedAt;
+      state = normalizeOrderState(await repository.save(session.user.id, nextState) || nextState, session.user.id);
+      submission = { idempotencyKey: key, fingerprint, result: result.order, submittedAt };
+      checkout = { status: "done", order: result.order, error: null, code: null, lines: null };
+      stock = { status: "ready", byKey: {}, error: null };
+      notify();
+      return submission;
+    } catch (checkoutError) {
+      checkout = {
+        status: "error",
+        order: null,
+        error: checkoutError.message,
+        code: checkoutError.code || "server_error",
+        lines: checkoutError.lines || null,
+      };
+      notify();
+      if (checkoutError.code === "not_authenticated") setAccount({ status: "signed-out" });
+      if (["insufficient_stock", "unknown_product", "needs_option"].includes(checkoutError.code)) {
+        refreshStock().catch(() => undefined);
+      }
+      throw checkoutError;
+    }
+  }
+
   const service = {
     get version() { return 1; },
     get isVisualPreview() { return visualPreviewMode(); },
+    get isOdoo() { return odooMode(); },
+    refreshAccount,
+    refreshStock,
+    async login(email, password) {
+      const result = await accountAction((client) => client.login(email, password));
+      setAccount({ status: "signed-in", user: result.user });
+      return result.user;
+    },
+    async logout() {
+      await accountAction((client) => client.logout());
+      setAccount({ status: "signed-out" });
+    },
+    register(values) {
+      return accountAction((client) => client.register(values));
+    },
+    async activate(token, password) {
+      const result = await accountAction((client) => client.activate(token, password));
+      setAccount({ status: "signed-in", user: result.user });
+      return result.user;
+    },
+    forgotPassword(email) {
+      return accountAction((client) => client.forgot(email));
+    },
+    async resetPassword(token, password) {
+      const result = await accountAction((client) => client.reset(token, password));
+      setAccount({ status: "signed-in", user: result.user });
+      return result.user;
+    },
+    changePassword(oldPassword, newPassword) {
+      return accountAction((client) => client.changePassword(oldPassword, newPassword));
+    },
+    dismissRemoved() {
+      removed = [];
+      notify();
+    },
+    setOption(brand, key, option) {
+      return enqueueMutation((current, changedAt) => {
+        const item = current.carts?.[brand]?.items.find((entry) => entry.key === key);
+        if (!item) return current;
+        if (option) item.option = String(option).slice(0, 80);
+        else delete item.option;
+        current.carts[brand].updatedAt = changedAt;
+        return current;
+      });
+    },
     getSnapshot: snapshot,
     start: initialize,
     configure(nextConfig = {}) {
@@ -365,7 +609,8 @@ export function createRoraimaB2BService({
         return current;
       });
     },
-    async submitOrder({ idempotencyKey = null } = {}) {
+    async submitOrder({ idempotencyKey = null, notes = "", reference = "" } = {}) {
+      if (odooMode()) return submitOdooOrder({ notes, reference });
       if (visualPreviewMode()) throw new Error("El envío de pedidos se habilitará al conectar el portal profesional.");
       if (!initialized) await initialize();
       if (!session?.user?.id) throw new Error("Se requiere una sesión Supabase activa.");
@@ -428,6 +673,7 @@ export function createRoraimaB2BService({
       }
     },
     async listOrders(limit = 50) {
+      if (odooMode()) return (await accountAction((client) => client.orders())).orders || [];
       if (!initialized) await initialize();
       if (!session?.user?.id) throw new Error("Se requiere una sesión Supabase activa.");
       if (localMockMode()) {

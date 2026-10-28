@@ -7,7 +7,8 @@
   <title>Mi pedido visual · Roraima Distribuciones</title>
   <link rel="icon" type="image/png" href="/assets/roraima-favicon-final-20260818.png">
   <link rel="stylesheet" href="/assets/b2b/visual-preview.css?v=20261008-3">
-  <script src="/assets/b2b/visual-preview-config.js?v=20261008-1"></script>
+  <script src="/config.js?v=20261028-stock-1"></script>
+  <script src="/assets/b2b/visual-preview-config.js?v=20261028-stock-1"></script>
 </head>
 <body>
   <header class="preview-header">
@@ -19,8 +20,8 @@
     <div class="preview-orders" data-roraima-global-orders></div>
   </main>
   <script type="module">
-    import { installRoraimaB2B } from "/assets/b2b/roraima-b2b-service.mjs?v=20261008-1";
-    import { mountOrderUI } from "/assets/b2b/order-ui.mjs?v=20261008-3";
+    import { installRoraimaB2B } from "/assets/b2b/roraima-b2b-service.mjs?v=20261028-stock-1";
+    import { mountOrderUI } from "/assets/b2b/order-ui.mjs?v=20261028-stock-1";
     mountOrderUI({ service: installRoraimaB2B(window), brand: "global", inline: true, container: document.querySelector("[data-roraima-global-orders]") });
   </script>
 </body>
