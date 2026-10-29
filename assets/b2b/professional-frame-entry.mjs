@@ -1,4 +1,4 @@
-import { mountCatalogAdapter } from "./catalog-adapter.mjs?v=20261008-visual-3";
+import { mountCatalogAdapter } from "./catalog-adapter.mjs?v=20261028-stock-1";
 import { installProfessionalHeader } from "./professional-header.mjs?v=20261008-visual-7";
 
 try {

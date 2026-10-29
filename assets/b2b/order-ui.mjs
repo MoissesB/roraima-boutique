@@ -1,4 +1,4 @@
-import { ORDER_BRANDS } from "./order-core.mjs";
+import { ORDER_BRANDS } from "./order-core.mjs?v=20261028-stock-1";
 
 const BRAND_LABELS = {
   silhouette: "Silhouette",
@@ -15,23 +15,79 @@ function escapeHtml(value) {
   })[character]);
 }
 
-function renderItems(state, view) {
+const ACCOUNT_URL = "/profesionales/vista/cuenta/";
+
+function optionLabel(option, backorder) {
+  const parts = [option.size ? `Talla ${option.size}` : option.option];
+  if (option.rim) parts.push(`aro ${option.rim}${option.preferred ? " (como en el catálogo)" : ""}`);
+  parts.push(option.available > 0 ? `${option.available} disp.` : (backorder ? "sobre pedido" : "sin existencias"));
+  return parts.join(" · ");
+}
+
+// Brands supplied on order (Alfred Kerbs) accept quantities above free stock.
+const BACKORDER_COPY = "Las piezas sin existencias se surten sobre pedido; Roraima te confirmará la fecha de entrega.";
+
+// Stock line for one cart item (Odoo mode, signed in).
+function renderStock(item, ctx) {
+  if (!ctx.signedIn) return "";
+  const entry = ctx.stockByKey[item.key];
+  const lineError = ctx.errorLines.get(item.key);
+  let body = "";
+  if (!entry) {
+    body = ctx.stockStatus === "error"
+      ? "<span class=\"stock\">No se pudieron consultar las existencias.</span>"
+      : "<span class=\"stock\">Consultando existencias…</span>";
+  } else if (entry.status === "unknown_product" || entry.status === "invalid_item") {
+    body = "<span class=\"stock stock-out\">No disponible</span><small>Esta referencia no está en el inventario de Roraima. Quítala para enviar el pedido.</small>";
+  } else {
+    const options = entry.options || [];
+    if (options.length > 1) {
+      body += `<label class="option-picker"><span>${entry.status === "needs_option" ? "Elige talla para continuar" : "Talla"}</span>
+        <select data-focus="option:${escapeHtml(item.key)}" data-option-brand="${item.brand}" data-option-key="${escapeHtml(item.key)}">
+          <option value="">Elige una opción…</option>
+          ${options.map((option) => `<option value="${escapeHtml(option.option)}" ${option.option === entry.option ? "selected" : ""} ${!entry.backorder && option.available < 1 && option.option !== entry.option ? "disabled" : ""}>${escapeHtml(optionLabel(option, entry.backorder))}</option>`).join("")}
+        </select></label>`;
+    }
+    if (entry.status === "ok" && entry.backorder) {
+      const quantity = Number(item.quantity) || 0;
+      body += entry.available > 0
+        ? `<span class="stock ${quantity > entry.available ? "stock-low" : "stock-ok"}">Disponible: ${entry.available}</span>`
+        : "<span class=\"stock stock-low\">Sobre pedido</span>";
+      if (quantity > entry.available) body += `<small>${BACKORDER_COPY}</small>`;
+    } else if (entry.status === "ok") {
+      const quantity = Number(item.quantity) || 0;
+      body += entry.available > 0
+        ? `<span class="stock ${quantity > entry.available ? "stock-low" : "stock-ok"}">Disponible: ${entry.available}</span>`
+        : "<span class=\"stock stock-out\">No disponible</span>";
+      if (entry.available > 0 && quantity > entry.available) {
+        body += `<small>Solo hay ${entry.available} piezas. Ajusta la cantidad para enviar el pedido.</small>`;
+      }
+    }
+  }
+  if (lineError) body += `<small class="line-error">${escapeHtml(lineError)}</small>`;
+  return `<div class="item-stock">${body}</div>`;
+}
+
+function renderItems(state, view, ctx = { odoo: false }) {
   const brands = view === "global" ? ORDER_BRANDS : [view];
   const sections = brands.map((brand) => {
     const items = state.carts[brand]?.items || [];
     const total = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+    const missing = ctx.odoo && total > 0 ? Math.max(0, ctx.minimum - total) : 0;
     return `
       <section class="brand-cart" data-brand-cart="${brand}">
         <header><h3>${BRAND_LABELS[brand]}</h3><span>${items.length} referencias · ${total} piezas</span></header>
+        ${missing ? `<p class="minimum">Mínimo ${ctx.minimum} piezas por marca: faltan ${missing}.</p>` : ""}
         ${items.length ? `<div class="items">${items.map((item) => `
-          <article class="item">
+          <article class="item${ctx.errorLines?.has(item.key) ? " has-error" : ""}">
             ${item.image ? `<img src="${escapeHtml(item.image)}" alt="">` : "<span class=\"placeholder\" aria-hidden=\"true\">RD</span>"}
             <div class="item-copy">
               <strong>${escapeHtml(item.name || item.model || item.sku)}</strong>
               <small>${escapeHtml([item.sku, item.color].filter(Boolean).join(" · "))}</small>
             </div>
-            <label class="quantity"><span>Cantidad</span><input type="number" min="1" max="9999" value="${Number(item.quantity) || 1}" data-quantity-brand="${brand}" data-quantity-key="${escapeHtml(item.key)}"></label>
+            <label class="quantity"><span>Cantidad</span><input type="number" min="1" max="${ctx.odoo ? 999 : 9999}" value="${Number(item.quantity) || 1}" data-focus="qty:${escapeHtml(item.key)}" data-quantity-brand="${brand}" data-quantity-key="${escapeHtml(item.key)}"></label>
             <button class="remove" type="button" data-remove-brand="${brand}" data-remove-key="${escapeHtml(item.key)}" aria-label="Quitar ${escapeHtml(item.name || item.model || item.sku)}">×</button>
+            ${ctx.odoo ? renderStock(item, ctx) : ""}
           </article>`).join("")}</div>` : `
           <div class="empty">
             <p>Aún no hay referencias de ${BRAND_LABELS[brand]}.</p>
@@ -71,7 +127,7 @@ function statusCopy(snapshot) {
 }
 
 function renderVisualCustomerForm(customer, total) {
-  const field = (name, label, options = {}) => `<label class="field${options.wide ? " field-wide" : ""}"><span>${label}${options.required ? " *" : ""}</span><input name="${name}" type="${options.type || "text"}" ${options.required ? "required" : ""} maxlength="${options.maxlength || 120}" value="${escapeHtml(customer[name] || "")}"></label>`;
+  const field = (name, label, options = {}) => `<label class="field${options.wide ? " field-wide" : ""}"><span>${label}${options.required ? " *" : ""}</span><input data-focus="pdf:${name}" name="${name}" type="${options.type || "text"}" ${options.required ? "required" : ""} maxlength="${options.maxlength || 120}" value="${escapeHtml(customer[name] || "")}"></label>`;
   return `<section class="optic visual-customer">
     <h3>Datos del cliente para el PDF</h3>
     <p>Completa los datos de la óptica. Se usarán solo para generar el PDF en este dispositivo: no se envían ni se guardan en el servidor.</p>
@@ -85,7 +141,7 @@ function renderVisualCustomerForm(customer, total) {
         ${field("city", "Ciudad", { required: true })}
         ${field("country", "País", { required: true })}
         ${field("address", "Dirección", { wide: true, maxlength: 200 })}
-        <label class="field field-wide"><span>Observaciones</span><textarea name="notes" rows="2" maxlength="500">${escapeHtml(customer.notes || "")}</textarea></label>
+        <label class="field field-wide"><span>Observaciones</span><textarea data-focus="pdf:notes" name="notes" rows="2" maxlength="500">${escapeHtml(customer.notes || "")}</textarea></label>
       </div>
       <div class="signature-head"><strong>Firma del cliente</strong><button type="button" data-clear-signature>Limpiar firma</button></div>
       <canvas class="signature-pad" data-signature width="520" height="140" aria-label="Espacio para firmar con el dedo o el cursor"></canvas>
@@ -93,6 +149,85 @@ function renderVisualCustomerForm(customer, total) {
       <button class="pdf-button" type="submit" ${total < 1 ? "disabled" : ""}>Descargar PDF del pedido</button>
       <p class="pdf-feedback" data-pdf-feedback role="status" aria-live="polite"></p>
     </form>
+  </section>`;
+}
+
+function renderAccountBar(snapshot) {
+  const account = snapshot.account || {};
+  if (account.status === "signed-in") {
+    const user = account.user || {};
+    return `<div class="account-bar"><p>Sesión iniciada: <strong>${escapeHtml(user.name || user.email)}</strong>${user.optical ? ` · ${escapeHtml(user.optical)}` : ""}</p>
+      <div><a href="${ACCOUNT_URL}" target="_top">Mi cuenta</a><button type="button" data-logout>Cerrar sesión</button></div></div>`;
+  }
+  if (account.status === "signed-out") {
+    return `<div class="account-bar is-muted"><p>Inicia sesión para ver existencias y enviar tu pedido a Roraima. Al iniciar sesión se quitan las referencias que Roraima no puede surtir.</p>
+      <div><a class="account-cta" href="${ACCOUNT_URL}" target="_top">Iniciar sesión o crear cuenta</a></div></div>`;
+  }
+  if (account.status === "unavailable") {
+    return "<div class=\"account-bar is-muted\"><p>El servidor de pedidos no responde en este momento. Puedes seguir armando tu selección y descargar el PDF.</p></div>";
+  }
+  return "<div class=\"account-bar is-muted\"><p>Comprobando tu sesión…</p></div>";
+}
+
+// Reasons the Odoo checkout button is disabled, in plain Spanish.
+function checkoutBlockers(snapshot) {
+  const blockers = [];
+  const minimum = snapshot.minimumPerBrand || 50;
+  const byKey = snapshot.stock?.byKey || {};
+  let stockMissing = false;
+  for (const brand of ORDER_BRANDS) {
+    const items = snapshot.state.carts[brand]?.items || [];
+    const total = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+    if (total > 0 && total < minimum) blockers.push(`${BRAND_LABELS[brand]}: faltan ${minimum - total} piezas para el mínimo de ${minimum}.`);
+    for (const item of items) {
+      const entry = byKey[item.key];
+      const label = item.name || item.model || item.sku;
+      if (!entry) { stockMissing = true; continue; }
+      if (entry.status === "unknown_product" || entry.status === "invalid_item") blockers.push(`${label}: no disponible. Quítala del pedido.`);
+      else if (entry.status === "needs_option") blockers.push(`${label}: elige una talla.`);
+      else if (entry.backorder) continue;
+      else if (entry.available < 1) blockers.push(`${label}: sin existencias. Quítala del pedido.`);
+      else if (entry.available < Number(item.quantity || 0)) blockers.push(`${label}: solo hay ${entry.available} piezas.`);
+    }
+  }
+  if (!(snapshot.totals.global > 0)) blockers.push("Añade referencias desde los catálogos.");
+  if (stockMissing || snapshot.stock?.status === "loading") blockers.push("Esperando la consulta de existencias…");
+  return blockers;
+}
+
+function renderRemoved(removed = []) {
+  if (!removed.length) return "";
+  const unknown = removed.filter((entry) => entry.reason === "unknown_product");
+  const empty = removed.filter((entry) => entry.reason !== "unknown_product");
+  const list = (entries) => entries.map((entry) => `<li>${escapeHtml(entry.label)}${entry.detail ? ` <small>${escapeHtml(entry.detail)}</small>` : ""}</li>`).join("");
+  return `<section class="removed" role="status">
+    <p><strong>Quitamos del pedido referencias que Roraima no puede surtir.</strong></p>
+    ${empty.length ? `<p>Sin existencias:</p><ul>${list(empty)}</ul>` : ""}
+    ${unknown.length ? `<p>No están en el inventario de Roraima:</p><ul>${list(unknown)}</ul>` : ""}
+    <button type="button" data-dismiss-removed>Entendido</button>
+  </section>`;
+}
+
+function renderOdooCheckout(snapshot, draft) {
+  const account = snapshot.account || {};
+  const checkout = snapshot.checkout || {};
+  if (checkout.status === "done" && checkout.order) {
+    return `<section class="submit-order is-done" role="status">
+      <h3>Pedido recibido</h3>
+      <p>Tu pedido <strong>${escapeHtml(checkout.order.name)}</strong> llegó a Roraima (${Number(checkout.order.units) || 0} piezas). El equipo comercial lo revisará y te contactará para confirmarlo. Tu selección se vació.</p>
+    </section>`;
+  }
+  if (account.status !== "signed-in") return "";
+  const blockers = checkoutBlockers(snapshot);
+  const submitting = checkout.status === "submitting";
+  return `<section class="submit-order">
+    <h3>Enviar pedido a Roraima</h3>
+    <p>Se crea una cotización en Roraima con los precios de tu lista. No se cobra nada en línea.</p>
+    <label class="field field-wide"><span>Referencia interna (opcional)</span><input data-focus="checkout-reference" data-checkout-reference maxlength="60" value="${escapeHtml(draft.reference)}"></label>
+    <label class="field field-wide"><span>Notas para Roraima (opcional)</span><textarea data-focus="checkout-notes" data-checkout-notes rows="3" maxlength="1000">${escapeHtml(draft.notes)}</textarea></label>
+    ${blockers.length ? `<ul class="blockers">${blockers.map((text) => `<li>${escapeHtml(text)}</li>`).join("")}</ul>` : ""}
+    ${checkout.status === "error" ? `<p class="checkout-error" role="alert">${escapeHtml(checkout.error)}</p>` : ""}
+    <button type="button" data-submit-order ${blockers.length || submitting ? "disabled" : ""}>${submitting ? "Enviando pedido…" : "Enviar pedido"}</button>
   </section>`;
 }
 
@@ -157,6 +292,37 @@ const STYLE = `
   .pdf-button { width: 100%; min-height: 44px; border: 1px solid #211f20; background: #211f20; color: #fff; font-weight: 700; cursor: pointer; }
   .pdf-button:disabled { opacity: .5; cursor: not-allowed; }
   .pdf-feedback { min-height: 1.2em; margin: 8px 0 0; color: #5a3c19; font-size: 12px; }
+  .account-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin: 0 0 16px; padding: 12px 14px; border: 1px solid #d8d3ce; background: #fff; font-size: 13px; }
+  .account-bar p { margin: 0; }
+  .account-bar.is-muted { background: #eeebe7; }
+  .account-bar div { display: flex; gap: 12px; align-items: center; }
+  .account-bar a { color: #211f20; font-weight: 650; }
+  .account-bar button { border: 1px solid #211f20; padding: 7px 10px; background: #fff; cursor: pointer; }
+  .account-bar .account-cta { padding: 8px 12px; background: #211f20; color: #fff; text-decoration: none; }
+  .removed { margin: 0 0 12px; padding: 12px 14px; border-radius: 8px; background: #f7e1de; color: #5c1a1a; font-size: 12px; line-height: 1.5; }
+  .removed p { margin: 0 0 4px; }
+  .removed ul { margin: 0 0 8px; padding-left: 18px; }
+  .removed small { color: #7a4a45; }
+  .removed button { border: 1px solid #5c1a1a; border-radius: 99px; padding: 4px 12px; background: transparent; color: inherit; cursor: pointer; }
+  .minimum { margin: 0; padding: 9px 16px; background: #fff7e0; color: #5a3c19; font-size: 12px; }
+  .item-stock { grid-column: 2 / -1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 12px; }
+  .item-stock small { color: #68615d; }
+  .item.has-error { background: #fff4f2; }
+  .stock { padding: 3px 8px; border-radius: 99px; background: #eeebe7; }
+  .stock-ok { background: #e3f1e5; color: #1f5a2a; }
+  .stock-low { background: #fff1d6; color: #6b4300; }
+  .stock-out { background: #f7e1de; color: #7e1f1f; }
+  .line-error { color: #7e1f1f !important; }
+  .option-picker { flex: 1 1 100%; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .option-picker select { width: 100%; max-width: 100%; min-width: 0; padding: 6px; border: 1px solid #c8c2bc; background: #fff; }
+  .submit-order h3 { margin: 0 0 6px; }
+  .submit-order .field { display: block; margin-bottom: 10px; }
+  .submit-order .field input, .submit-order .field textarea { width: 100%; border: 1px solid #c8c2bc; padding: 10px; }
+  .blockers { margin: 0 0 12px; padding-left: 18px; color: #6b4300; font-size: 12px; line-height: 1.5; }
+  .checkout-error { color: #7e1f1f !important; font-weight: 600; }
+  .submit-order.is-done { border-color: #1f5a2a; background: #f1f8f2; }
+  .pdf-details { margin-top: 24px; }
+  .pdf-details > summary { cursor: pointer; font-weight: 650; padding: 12px 0; }
   @media (max-width: 560px) {
     .body { padding: 18px 14px 32px; }
     .item { grid-template-columns: 50px minmax(0,1fr) 68px 28px; gap: 8px; padding: 10px; }
@@ -186,6 +352,7 @@ export function mountOrderUI({
   const visualPreview = Boolean(service.isVisualPreview);
   const visualCustomer = {};
   let visualSignature = "";
+  const checkoutDraft = { notes: "", reference: "" };
 
   function mountSignature() {
     const canvas = shadow.querySelector("[data-signature]");
@@ -234,10 +401,70 @@ export function mountOrderUI({
     });
   }
 
+  function prefillCustomer() {
+    const user = latest.account?.status === "signed-in" ? latest.account.user || {} : null;
+    if (!user) return;
+    const defaults = {
+      optical_name: user.optical || user.company,
+      company_name: user.company,
+      contact_name: user.name,
+      email: user.email,
+      phone: user.phone,
+      city: user.city,
+      country: user.country,
+      address: user.street,
+    };
+    for (const [field, value] of Object.entries(defaults)) {
+      if (value && !visualCustomer[field]) visualCustomer[field] = value;
+    }
+  }
+
+  // Re-rendering replaces the shadow DOM; keep the focused control and caret.
+  function captureFocus() {
+    const active = shadow.activeElement;
+    if (!active?.dataset?.focus) return null;
+    let selection = null;
+    try { selection = [active.selectionStart, active.selectionEnd]; } catch { selection = null; }
+    return { id: active.dataset.focus, selection };
+  }
+
+  function restoreFocus(focus) {
+    if (!focus) return;
+    const target = [...shadow.querySelectorAll("[data-focus]")].find((element) => element.dataset.focus === focus.id);
+    if (!target) return;
+    target.focus({ preventScroll: true });
+    try {
+      if (focus.selection && focus.selection[0] !== null) target.setSelectionRange(...focus.selection);
+    } catch {
+      // Number inputs and selects do not support selection ranges.
+    }
+  }
+
   function render() {
+    const focus = captureFocus();
     const optic = currentOptic(latest.state);
     const total = latest.totals.global || 0;
     const submitted = Boolean(latest.submission);
+    const odoo = latest.mode === "odoo";
+    if (odoo) prefillCustomer();
+    const errorLines = new Map();
+    for (const line of latest.checkout?.lines || []) {
+      if (!line?.key) continue;
+      if (latest.checkout.code === "insufficient_stock") errorLines.set(line.key, `Solicitaste ${line.requested}; hay ${line.available} disponibles.`);
+      else if (latest.checkout.code === "unknown_product") errorLines.set(line.key, "No disponible en Roraima.");
+      else if (latest.checkout.code === "needs_option") errorLines.set(line.key, "Elige una talla.");
+    }
+    const itemsContext = {
+      odoo,
+      signedIn: odoo && latest.account?.status === "signed-in",
+      stockByKey: latest.stock?.byKey || {},
+      stockStatus: latest.stock?.status,
+      minimum: latest.minimumPerBrand || 50,
+      errorLines,
+    };
+    const statusText = odoo
+      ? (latest.status === "ready" ? "Selección guardada en este navegador." : statusCopy(latest))
+      : (visualPreview && latest.status === "ready" ? "Selección guardada solo en este navegador." : statusCopy(latest));
     shadow.innerHTML = `<style>${STYLE}</style>
       ${inline ? "" : `<button class="fab" type="button" data-open>Mi pedido <b>${total}</b></button>`}
       ${!inline && open ? "<div class=\"backdrop\" data-close></div>" : ""}
@@ -247,13 +474,15 @@ export function mountOrderUI({
           ${inline ? "" : "<button class=\"close\" type=\"button\" data-close aria-label=\"Cerrar pedido\">×</button>"}
         </header>
         <div class="body">
-          <p class="status" data-status="${escapeHtml(latest.status)}" aria-live="polite">${escapeHtml(visualPreview && latest.status === "ready" ? "Selección guardada solo en este navegador." : statusCopy(latest))}</p>
+          <p class="status" data-status="${escapeHtml(latest.status)}" aria-live="polite">${escapeHtml(statusText)}</p>
+          ${odoo ? renderAccountBar(latest) : ""}
           <nav class="tabs" aria-label="Ver carrito">
             <button type="button" data-view="global" aria-pressed="${view === "global"}">Todo (${latest.totals.global || 0})</button>
             ${ORDER_BRANDS.map((entry) => `<button type="button" data-view="${entry}" aria-pressed="${view === entry}">${BRAND_LABELS[entry]} (${latest.totals[entry] || 0})</button>`).join("")}
           </nav>
-          ${renderItems(latest.state, view)}
-          ${visualPreview ? `${renderVisualCustomerForm(visualCustomer, total)}<section class="submit-order"><p>Este PDF es un borrador descargado por ti. El inicio de sesión y el envío de pedidos todavía no están conectados.</p><button type="button" disabled>Envío de pedidos próximamente</button></section>` : `<section class="optic">
+          ${odoo ? renderRemoved(latest.removed) : ""}
+          ${renderItems(latest.state, view, itemsContext)}
+          ${odoo ? `${renderOdooCheckout(latest, checkoutDraft)}<details class="pdf-details" ${latest.account?.status === "signed-in" ? "" : "open"}><summary>Descargar PDF de la selección</summary>${renderVisualCustomerForm(visualCustomer, total)}</details>` : visualPreview ? `${renderVisualCustomerForm(visualCustomer, total)}<section class="submit-order"><p>Este PDF es un borrador descargado por ti. El inicio de sesión y el envío de pedidos todavía no están conectados.</p><button type="button" disabled>Envío de pedidos próximamente</button></section>` : `<section class="optic">
             <h3>Óptica del pedido</h3>
             <p>Guarda tus ópticas una vez y reutilízalas en futuras selecciones.</p>
             <div class="optic-picker">
@@ -283,7 +512,7 @@ export function mountOrderUI({
             <p>Roraima recibirá una sola solicitud con las referencias de ambas marcas. No se aplican mínimos, precios, stock ni pagos en este portal.</p>
             <button type="button" data-submit-order ${total < 1 || !latest.state.activeOpticId || latest.status === "submitting" || submitted ? "disabled" : ""}>${submitted ? "Solicitud enviada" : "Enviar pedido para revisión"}</button>
           </section>`}
-          ${inline ? "" : `<a class="global-link" href="${visualPreview ? "/profesionales/vista/pedido/" : "/profesionales/pedidos/"}">Abrir vista global Roraima →</a>`}
+          ${inline ? "" : `<a class="global-link" href="${visualPreview || odoo ? "/profesionales/vista/pedido/" : "/profesionales/pedidos/"}">Abrir vista global Roraima →</a>`}
         </div>
       </section>` : ""}`;
 
@@ -308,7 +537,26 @@ export function mountOrderUI({
       service.saveOptic(values).catch(() => undefined);
     });
     shadow.querySelector("[data-submit-order]")?.addEventListener("click", () => {
-      service.submitOrder().catch(() => undefined);
+      if (!odoo) {
+        service.submitOrder().catch(() => undefined);
+        return;
+      }
+      service.submitOrder({ notes: checkoutDraft.notes, reference: checkoutDraft.reference })
+        .then(() => { checkoutDraft.notes = ""; checkoutDraft.reference = ""; })
+        .catch(() => undefined);
+    });
+    shadow.querySelectorAll("[data-option-key]").forEach((select) => select.addEventListener("change", () => {
+      service.setOption(select.dataset.optionBrand, select.dataset.optionKey, select.value).catch(() => undefined);
+    }));
+    shadow.querySelector("[data-dismiss-removed]")?.addEventListener("click", () => service.dismissRemoved?.());
+    shadow.querySelector("[data-logout]")?.addEventListener("click", () => {
+      service.logout().catch(() => undefined);
+    });
+    shadow.querySelector("[data-checkout-notes]")?.addEventListener("input", (event) => {
+      checkoutDraft.notes = event.target.value;
+    });
+    shadow.querySelector("[data-checkout-reference]")?.addEventListener("input", (event) => {
+      checkoutDraft.reference = event.target.value;
     });
     const visualForm = shadow.querySelector("[data-visual-pdf-form]");
     visualForm?.addEventListener("input", (event) => {
@@ -334,6 +582,7 @@ export function mountOrderUI({
       }
     });
     mountSignature();
+    restoreFocus(focus);
   }
 
   const unsubscribe = service.subscribe((next) => {
