@@ -73,11 +73,9 @@ function renderItems(state, view, ctx = { odoo: false }) {
   const sections = brands.map((brand) => {
     const items = state.carts[brand]?.items || [];
     const total = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
-    const missing = ctx.odoo && total > 0 ? Math.max(0, ctx.minimum - total) : 0;
     return `
       <section class="brand-cart" data-brand-cart="${brand}">
         <header><h3>${BRAND_LABELS[brand]}</h3><span>${items.length} referencias · ${total} piezas</span></header>
-        ${missing ? `<p class="minimum">Mínimo ${ctx.minimum} piezas por marca: faltan ${missing}.</p>` : ""}
         ${items.length ? `<div class="items">${items.map((item) => `
           <article class="item${ctx.errorLines?.has(item.key) ? " has-error" : ""}">
             ${item.image ? `<img src="${escapeHtml(item.image)}" alt="">` : "<span class=\"placeholder\" aria-hidden=\"true\">RD</span>"}
@@ -172,13 +170,10 @@ function renderAccountBar(snapshot) {
 // Reasons the Odoo checkout button is disabled, in plain Spanish.
 function checkoutBlockers(snapshot) {
   const blockers = [];
-  const minimum = snapshot.minimumPerBrand || 50;
   const byKey = snapshot.stock?.byKey || {};
   let stockMissing = false;
   for (const brand of ORDER_BRANDS) {
     const items = snapshot.state.carts[brand]?.items || [];
-    const total = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
-    if (total > 0 && total < minimum) blockers.push(`${BRAND_LABELS[brand]}: faltan ${minimum - total} piezas para el mínimo de ${minimum}.`);
     for (const item of items) {
       const entry = byKey[item.key];
       const label = item.name || item.model || item.sku;
@@ -304,7 +299,6 @@ const STYLE = `
   .removed ul { margin: 0 0 8px; padding-left: 18px; }
   .removed small { color: #7a4a45; }
   .removed button { border: 1px solid #5c1a1a; border-radius: 99px; padding: 4px 12px; background: transparent; color: inherit; cursor: pointer; }
-  .minimum { margin: 0; padding: 9px 16px; background: #fff7e0; color: #5a3c19; font-size: 12px; }
   .item-stock { grid-column: 2 / -1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 12px; }
   .item-stock small { color: #68615d; }
   .item.has-error { background: #fff4f2; }
@@ -459,7 +453,6 @@ export function mountOrderUI({
       signedIn: odoo && latest.account?.status === "signed-in",
       stockByKey: latest.stock?.byKey || {},
       stockStatus: latest.stock?.status,
-      minimum: latest.minimumPerBrand || 50,
       errorLines,
     };
     const statusText = odoo

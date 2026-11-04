@@ -171,7 +171,6 @@ export function createRoraimaB2BService({
       stock: clone(stock),
       checkout: clone(checkout),
       removed: clone(removed),
-      minimumPerBrand: Number(account.user?.min_per_brand) || 50,
       state: clone(state),
       totals: Object.fromEntries([
         ...ORDER_BRANDS.map((brand) => [brand, cartCount(state, brand)]),

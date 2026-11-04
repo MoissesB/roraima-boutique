@@ -57,7 +57,7 @@ behaviour: selection in this browser + PDF, no login.
 | `assets/b2b/odoo-client.mjs` | `fetch` wrapper for `/roraima/api/*` (`credentials: "include"`), error codes → `RoraimaApiError` |
 | `assets/b2b/roraima-b2b-service.mjs` | shared cart service; `odoo` mode adds account state (`/me`), batched stock (one `/stock` call per cart change, debounced), option choice per line, idempotent checkout |
 | `assets/b2b/order-core.mjs` | cart item allowlist now includes `option` (the Odoo variant chosen in the cart) |
-| `assets/b2b/order-ui.mjs` | cart drawer / "Mi pedido": account bar, stock badges, size/variant picker, per-brand minimum, blocking reasons, notes + reference, checkout result; PDF download kept for everyone |
+| `assets/b2b/order-ui.mjs` | cart drawer / "Mi pedido": account bar, stock badges, size/variant picker, blocking reasons, notes + reference, checkout result; PDF download kept for everyone |
 | `assets/b2b/account-ui.mjs`, `assets/b2b/account.css` | login, registration, forgot password, profile, change password, orders; activation/reset token pages |
 | `profesionales/vista/cuenta/` | account page |
 | `cuenta/activar/`, `cuenta/restablecer/` | pages linked from the Odoo emails (`?token=`; removed from the address bar on load; `noindex`, `no-referrer`) |
@@ -85,7 +85,9 @@ selection made in the visual preview carries over.
 * A line with several Odoo variants (Silhouette sizes/shapes) shows a picker;
   sizes without stock are disabled (except for backorder brands); the choice
   is stored in the line (`option`) and re-validated on checkout.
-* Each brand present needs at least `min_per_brand` pieces (50).
+* Any non-empty order can be submitted; there is no minimum per brand. The Odoo
+  module must also accept a single piece (`min_per_brand = 0` or remove its
+  minimum validation) before the production API is enabled.
 * Outside backorder brands, quantities above the available stock block
   checkout; if stock dropped
   between display and checkout, the server answers `insufficient_stock` with
@@ -138,7 +140,7 @@ be fragile.
 
 All business settings live in Odoo (`roraima_portal_api.*` system parameters,
 admin only): allowed origins, order partner, warehouse, pricelist, team,
-salesperson, minimum per brand, reference patterns per brand, email sender and
+salesperson, reference patterns per brand, email sender and
 server, link URLs and rate limits. See the module's `ops/README.md` for each
 key, the pattern syntax and how to add a brand. The website only needs a
 change when a new brand key is introduced (the catalog must send items with
