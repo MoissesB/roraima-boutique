@@ -23,6 +23,8 @@ const ITEM_FIELDS = Object.freeze([
   "measurements",
   "image",
   "catalogUrl",
+  // Odoo variant chosen in the cart (e.g. a Silhouette size); re-checked on the server.
+  "option",
 ]);
 
 const OPTIC_FIELDS = Object.freeze([

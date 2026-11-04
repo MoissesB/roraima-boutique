@@ -4,17 +4,25 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Acceso profesional · Vista Roraima</title>
+  <title>Mi cuenta profesional · Roraima Distribuciones</title>
   <link rel="icon" type="image/png" href="/assets/roraima-favicon-final-20260818.png">
   <link rel="stylesheet" href="/assets/b2b/visual-preview.css?v=20261008-3">
+  <link rel="stylesheet" href="/assets/b2b/account.css?v=20261028-stock-1">
+  <script src="/config.js?v=20261028-stock-1"></script>
+  <script src="/assets/b2b/visual-preview-config.js?v=20261028-stock-1"></script>
 </head>
 <body>
   <header class="preview-header"><a class="preview-logo-home" href="/" aria-label="Roraima México, inicio"><img src="/assets/roraima-distribuciones-oficial.png" alt="Roraima Distribuciones"></a><nav aria-label="Marcas profesionales"><a href="/profesionales/vista/alfred-kerbs/">Alfred Kerbs</a><a href="/profesionales/vista/silhouette/">Silhouette</a><a href="/profesionales/vista/pedido/">Mi pedido</a></nav></header>
-  <main class="preview-copy">
+  <main class="account-main">
     <span class="preview-kicker">Acceso profesional</span>
-    <h1>La cuenta de vendedores está en preparación.</h1>
-    <p>Esta publicación permite revisar el diseño y seleccionar productos. El inicio de sesión, las invitaciones y los pedidos entre dispositivos se activarán cuando el programador conecte el servidor.</p>
-    <a class="button" href="/profesionales/vista/">Volver a los catálogos</a>
+    <h1>Tu cuenta Roraima</h1>
+    <p>Con tu cuenta ves existencias reales de Silhouette y Alfred Kerbs y envías tu pedido directamente a Roraima. No hay pagos en línea: el equipo comercial confirma cada pedido.</p>
+    <div data-account-root aria-live="polite"></div>
   </main>
+  <script type="module">
+    import { installRoraimaB2B } from "/assets/b2b/roraima-b2b-service.mjs?v=20261028-stock-1";
+    import { mountAccountPage } from "/assets/b2b/account-ui.mjs?v=20261028-stock-1";
+    mountAccountPage({ service: installRoraimaB2B(window), container: document.querySelector("[data-account-root]") });
+  </script>
 </body>
 </html>
