@@ -3,3 +3,10 @@
 .site-header .roraima img{display:block;width:112px;height:56px;object-fit:contain}
 .site-header .brand img{display:block;width:186px;height:auto}
 @media(max-width:700px){.site-header .brand img{width:172px}}
+.hero img.portrait{object-fit:contain;background:#f1eee9}
+.article-content .callout{margin:45px 0;padding:26px 30px;background:#f0ece7;border-left:3px solid #171717}
+.article-content .callout strong{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.14em;margin-bottom:8px}
+.article-content .buttons{display:flex;gap:12px;flex-wrap:wrap}
+.article-content .button{display:inline-block;background:#171717;color:#fff;text-decoration:none;padding:8px 15px;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.article-content .button.secondary{background:transparent;border:1px solid #171717;color:#171717}
+.article-content .source-note{font-size:14px;color:#666;border-top:1px solid #ddd9d3;padding-top:22px;margin-top:45px}

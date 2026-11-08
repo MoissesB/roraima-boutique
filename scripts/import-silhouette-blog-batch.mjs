@@ -39,6 +39,14 @@ for (const article of articles) {
   for (const field of ['title', 'excerpt', 'content', 'image', 'imageAlt', 'publishAtMexico', 'seoTitle', 'seoDescription', 'socialTitle', 'socialDescription', 'socialImage', 'socialImageAlt']) {
     if (typeof article[field] !== 'string' || !article[field].trim()) throw new Error(`${slug}: missing ${field}`);
   }
+  if (article.imageCaption !== undefined && (typeof article.imageCaption !== 'string' || !article.imageCaption.trim())) {
+    throw new Error(`${slug}: invalid image caption`);
+  }
+  if (article.imageWidth !== undefined || article.imageHeight !== undefined) {
+    if (!Number.isInteger(article.imageWidth) || article.imageWidth < 450 || !Number.isInteger(article.imageHeight) || article.imageHeight < 300) {
+      throw new Error(`${slug}: invalid cover image dimensions`);
+    }
+  }
   if (!/^https:\/\//.test(article.image)) throw new Error(`${slug}: image must use HTTPS`);
   if (!/^https:\/\//.test(article.socialImage)) throw new Error(`${slug}: social image must use HTTPS`);
   if (!Number.isInteger(article.socialImageWidth) || article.socialImageWidth < 600 || !Number.isInteger(article.socialImageHeight) || article.socialImageHeight < 300) {
@@ -55,6 +63,8 @@ for (const article of articles) {
     article: {
       status: 'scheduled', slug, title: article.title, excerpt: article.excerpt,
       content: article.content, image: article.image, imageAlt: article.imageAlt,
+      ...(article.imageCaption ? { imageCaption: article.imageCaption } : {}),
+      ...(article.imageWidth ? { imageWidth: article.imageWidth, imageHeight: article.imageHeight } : {}),
       publishAtMexico: article.publishAtMexico,
       timeZone: 'America/Mexico_City',
       publishAt: toUtc(article.publishAtMexico),

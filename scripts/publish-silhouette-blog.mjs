@@ -37,6 +37,14 @@ function validate(post, filename) {
   if (post.timeZone !== zone) throw new Error(`${filename}: timeZone must be ${zone}`);
   if (!/^https:\/\//.test(post.image)) throw new Error(`${filename}: cover image must use HTTPS`);
   if (!/^https:\/\//.test(post.socialImage)) throw new Error(`${filename}: social image must use HTTPS`);
+  if (post.imageCaption !== undefined && (typeof post.imageCaption !== 'string' || !post.imageCaption.trim())) {
+    throw new Error(`${filename}: invalid image caption`);
+  }
+  if (post.imageWidth !== undefined || post.imageHeight !== undefined) {
+    if (!Number.isInteger(post.imageWidth) || post.imageWidth < 450 || !Number.isInteger(post.imageHeight) || post.imageHeight < 300) {
+      throw new Error(`${filename}: invalid cover image dimensions`);
+    }
+  }
   if (!Number.isInteger(post.socialImageWidth) || post.socialImageWidth < 600 || !Number.isInteger(post.socialImageHeight) || post.socialImageHeight < 300) {
     throw new Error(`${filename}: invalid social image dimensions`);
   }
@@ -65,9 +73,13 @@ function htmlPage(post) {
   const modifiedZoneName = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'longOffset' })
     .formatToParts(modified).find(part => part.type === 'timeZoneName').value;
   const modifiedLocal = `${mexicoLocal(modified)}${modifiedZoneName.replace('GMT', '')}`;
+  const socialImageType = /\.png(?:[?#]|$)/i.test(post.socialImage) ? 'image/png' : 'image/jpeg';
+  const heroSize = post.imageWidth ? ` width="${post.imageWidth}" height="${post.imageHeight}"` : '';
+  const heroClass = post.imageWidth && post.imageHeight > post.imageWidth ? ' class="portrait"' : '';
   const metadata = {
     '@context': 'https://schema.org', '@type': 'BlogPosting',
-    headline: post.title, description: post.seoDescription, image: [post.image],
+    headline: post.title, description: post.seoDescription,
+    image: post.imageWidth ? { '@type': 'ImageObject', url: post.image, width: post.imageWidth, height: post.imageHeight, caption: post.imageCaption || post.imageAlt } : [post.image],
     datePublished: publishedLocal, dateModified: modifiedLocal, inLanguage: 'es-MX',
     mainEntityOfPage: url,
     author: { '@type': 'Organization', name: 'Distribuidora Roraima', url: site },
@@ -93,7 +105,7 @@ function htmlPage(post) {
   <meta property="og:url" content="${url}">
   <meta property="og:image" content="${escapeHtml(post.socialImage)}">
   <meta property="og:image:secure_url" content="${escapeHtml(post.socialImage)}">
-  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:type" content="${socialImageType}">
   <meta property="og:image:width" content="${post.socialImageWidth}">
   <meta property="og:image:height" content="${post.socialImageHeight}">
   <meta property="og:image:alt" content="${escapeHtml(post.socialImageAlt)}">
@@ -104,14 +116,14 @@ function htmlPage(post) {
   <meta name="twitter:description" content="${escapeHtml(post.socialDescription)}">
   <meta name="twitter:image" content="${escapeHtml(post.socialImage)}">
   <meta name="twitter:image:alt" content="${escapeHtml(post.socialImageAlt)}">
-  <link rel="stylesheet" href="../silhouette-blog.css?v=20261013-logos">
+  <link rel="stylesheet" href="../silhouette-blog.css?v=20261108-blog30">
   <script type="application/ld+json">${JSON.stringify(metadata).replace(/</g, '\\u003c')}</script>
 </head>
 <body>
   <header class="site-header"><a class="roraima" href="${site}/" aria-label="Roraima Distribuciones"><img src="${site}/silhouette/roraima-logo-on-light-v5.png" alt="Roraima Distribuciones" width="112" height="56"></a><a class="brand" href="${site}/silhouette/" aria-label="Silhouette"><img src="${site}/silhouette/brand/silhouette-on-light.png" alt="Silhouette" width="186" height="53"></a><nav><a href="${site}/silhouette/">Colección</a><a href="../">Blog</a></nav></header>
   <main><article>
     <header class="article-header"><p class="eyebrow">SILHOUETTE · DISEÑO Y TECNOLOGÍA</p><h1>${escapeHtml(post.title)}</h1><p class="excerpt">${escapeHtml(post.excerpt)}</p><time datetime="${publishedLocal}">${escapeHtml(dateLabel)}</time></header>
-    <figure class="hero"><img src="${escapeHtml(post.image)}" alt="${escapeHtml(post.imageAlt)}"><figcaption>Imagen oficial de Silhouette.</figcaption></figure>
+    <figure class="hero"><img${heroClass} src="${escapeHtml(post.image)}" alt="${escapeHtml(post.imageAlt)}"${heroSize}><figcaption>${escapeHtml(post.imageCaption || 'Imagen oficial de Silhouette.')}</figcaption></figure>
     <div class="article-content">${post.content}</div>
   </article></main>
   <footer><a href="../">Más artículos Silhouette</a><span>Distribuidora Roraima · México</span></footer>
@@ -121,7 +133,7 @@ function htmlPage(post) {
 
 function indexPage(posts) {
   const cards = posts.map(post => `<article><a href="${escapeHtml(post.slug)}/"><img src="${escapeHtml(post.image)}" alt="" loading="lazy"><h2>${escapeHtml(post.title)}</h2></a><p>${escapeHtml(post.excerpt)}</p></article>`).join('\n');
-  return `<!doctype html><html lang="es-MX"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="index,follow"><title>Blog Silhouette México para ópticas | Roraima Distribuciones</title><meta name="description" content="Artículos sobre diseño, tecnología y colecciones de Silhouette para profesionales de la óptica en México."><link rel="canonical" href="${site}/silhouette/blog/"><link rel="stylesheet" href="silhouette-blog.css?v=20261013-logos"></head><body><header class="site-header"><a class="roraima" href="${site}/" aria-label="Roraima Distribuciones"><img src="${site}/silhouette/roraima-logo-on-light-v5.png" alt="Roraima Distribuciones" width="112" height="56"></a><a class="brand" href="${site}/silhouette/" aria-label="Silhouette"><img src="${site}/silhouette/brand/silhouette-on-light.png" alt="Silhouette" width="186" height="53"></a><nav><a href="${site}/silhouette/">Colección</a></nav></header><main class="listing"><p class="eyebrow">BLOG PROFESIONAL · SILHOUETTE MÉXICO</p><h1>Diseño y tecnología para ópticas</h1><p>Información de Silhouette y perspectivas para la selección profesional de monturas en México.</p><div class="cards">${cards}</div></main><footer><a href="${site}/silhouette/">Colección Silhouette</a><span>Distribuidora Roraima · México</span></footer></body></html>`;
+  return `<!doctype html><html lang="es-MX"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="index,follow"><title>Blog Silhouette México para ópticas | Roraima Distribuciones</title><meta name="description" content="Artículos sobre diseño, tecnología y colecciones de Silhouette para profesionales de la óptica en México."><link rel="canonical" href="${site}/silhouette/blog/"><link rel="stylesheet" href="silhouette-blog.css?v=20261108-blog30"></head><body><header class="site-header"><a class="roraima" href="${site}/" aria-label="Roraima Distribuciones"><img src="${site}/silhouette/roraima-logo-on-light-v5.png" alt="Roraima Distribuciones" width="112" height="56"></a><a class="brand" href="${site}/silhouette/" aria-label="Silhouette"><img src="${site}/silhouette/brand/silhouette-on-light.png" alt="Silhouette" width="186" height="53"></a><nav><a href="${site}/silhouette/">Colección</a></nav></header><main class="listing"><p class="eyebrow">BLOG PROFESIONAL · SILHOUETTE MÉXICO</p><h1>Diseño y tecnología para ópticas</h1><p>Información de Silhouette y perspectivas para la selección profesional de monturas en México.</p><div class="cards">${cards}</div></main><footer><a href="${site}/silhouette/">Colección Silhouette</a><span>Distribuidora Roraima · México</span></footer></body></html>`;
 }
 
 const filenames = (await readdir(queueDir)).filter(name => name.endsWith('.json')).sort();

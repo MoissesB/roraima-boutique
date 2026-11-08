@@ -19,7 +19,7 @@ for (const field of ['seoTitle', 'seoDescription', 'socialTitle', 'socialDescrip
 
 const sitemap = await readFile(join(root, 'sitemap.xml'), 'utf8');
 const blogIndex = await readFile(join(outputDir, 'index.html'), 'utf8');
-assert(blogIndex.includes('silhouette-blog.css?v=20261013-logos'), 'Blog index must request current CSS');
+assert(blogIndex.includes('silhouette-blog.css?v=20261108-blog30'), 'Blog index must request current CSS');
 for (const logo of ['/silhouette/roraima-logo-on-light-v5.png', '/silhouette/brand/silhouette-on-light.png']) {
   assert(blogIndex.includes(logo), `Blog index is missing ${logo}`);
 }
@@ -47,7 +47,7 @@ for (const post of posts) {
   }
 
   const html = await readFile(path, 'utf8');
-  assert(html.includes('silhouette-blog.css?v=20261013-logos'), `${post.slug}: stale CSS reference`);
+  assert(html.includes('silhouette-blog.css?v=20261108-blog30'), `${post.slug}: stale CSS reference`);
   for (const logo of ['/silhouette/roraima-logo-on-light-v5.png', '/silhouette/brand/silhouette-on-light.png']) {
     assert(html.includes(logo), `${post.slug}: missing ${logo}`);
   }
@@ -59,6 +59,7 @@ for (const post of posts) {
   assert.equal(tag(html, 'og:title', 'property'), post.socialTitle);
   assert.equal(tag(html, 'og:description', 'property'), post.socialDescription);
   assert.equal(tag(html, 'og:image', 'property'), post.socialImage);
+  assert.equal(tag(html, 'og:image:type', 'property'), /\.png(?:[?#]|$)/i.test(post.socialImage) ? 'image/png' : 'image/jpeg');
   assert.equal(tag(html, 'og:image:alt', 'property'), post.socialImageAlt);
   assert.equal(Number(tag(html, 'og:image:width', 'property')), post.socialImageWidth);
   assert.equal(Number(tag(html, 'og:image:height', 'property')), post.socialImageHeight);
@@ -70,7 +71,11 @@ for (const post of posts) {
   assert.equal((html.match(/<h1\b/g) || []).length, 1, `${post.slug}: expected one H1`);
   assert((html.match(/<h2\b/g) || []).length >= 2, `${post.slug}: expected H2 sections`);
   assert(html.includes(`alt="${post.imageAlt}"`), `${post.slug}: cover alt text`);
-  assert(html.includes('https://www.silhouette.com/'), `${post.slug}: official source`);
+  assert(/https:\/\/(?:www\.silhouette(?:-group)?\.com\/|a\.storyblok\.com\/f\/(?:40252|80377)\/)/.test(html), `${post.slug}: official source`);
+  if (post.imageCaption) assert(html.includes(post.imageCaption), `${post.slug}: image caption`);
+  if (post.imageWidth) {
+    assert(html.includes(`width="${post.imageWidth}" height="${post.imageHeight}"`), `${post.slug}: image dimensions`);
+  }
   assert(html.includes('https://roraimamx.com/silhouette/#/catalogo'), `${post.slug}: catalog CTA`);
   assert(html.includes('https://distribuciones.roraimamx.com/home-page-6687#calendario'), `${post.slug}: calendar CTA`);
   assert(!/Ra[uú]l/i.test(html), `${post.slug}: unverified personal name`);
