@@ -30,8 +30,9 @@ jobs:
       - name: Preparar archivos públicos sin artículos programados
         run: |
           mkdir -p .site-artifact
-          rsync -a --exclude='/.git/' --exclude='/.github/' --exclude='/content/' --exclude='/scripts/' --exclude='/silhouette/assets/local-blog-preview.js' --exclude='/.site-artifact/' ./ .site-artifact/
+          rsync -a --include='frame-0000.jpg' --exclude='frame-*.jpg' --exclude='/.git/' --exclude='/.github/' --exclude='/content/' --exclude='/scripts/' --exclude='/silhouette/assets/local-blog-preview.js' --exclude='/.site-artifact/' ./ .site-artifact/
           sed -i '/local-blog-preview.js/d' .site-artifact/silhouette/index.html
+          node scripts/prepare-silhouette-pages-assets.mjs .site-artifact
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
