@@ -1,6 +1,7 @@
 import { readFile, readdir, mkdir, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readVideo, validateVideoSchedule, videoMetadata } from './silhouette-blog-video.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const queueDir = join(root, 'content', 'silhouette-blog', 'scheduled');
@@ -56,10 +57,11 @@ function validate(post, filename) {
   if (post.modifiedAt && (!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/.test(post.modifiedAt) || new Date(post.modifiedAt).getTime() < published.getTime())) {
     throw new Error(`${filename}: invalid modifiedAt`);
   }
-  if (/<\s*(script|iframe|object|embed|form)\b|\bon[a-z]+\s*=|javascript:/i.test(post.content)) {
+  if (/<\s*(script|iframe|object|embed|form|video|source|track)\b|\bon[a-z]+\s*=|javascript:/i.test(post.content)) {
     throw new Error(`${filename}: article contains unsupported HTML`);
   }
-  return { ...post, id: `silhouette-${post.slug}` };
+  const video = readVideo(post.video, post.slug);
+  return { ...post, video, id: `silhouette-${post.slug}` };
 }
 
 function htmlPage(post) {
@@ -86,7 +88,16 @@ function htmlPage(post) {
     publisher: { '@type': 'Organization', name: 'Distribuidora Roraima', url: site },
     about: { '@type': 'Brand', name: 'Silhouette', url: 'https://www.silhouette.com/' },
     isAccessibleForFree: true,
+    ...(post.video ? { video: videoMetadata(post.video, publishedLocal) } : {}),
   };
+  const videoSection = post.video ? `    <figure class="article-video" id="video">
+      <video controls playsinline preload="metadata"${new URL(post.video.captionsUrl).origin === site ? '' : ' crossorigin="anonymous"'} poster="${escapeHtml(post.video.posterUrl)}" aria-labelledby="video-title">
+        <source src="${escapeHtml(post.video.url)}" type="video/mp4">
+        <track src="${escapeHtml(post.video.captionsUrl)}" kind="captions" srclang="es-MX" label="Español (México)">
+        <a href="${escapeHtml(post.video.url)}">Abrir video</a>
+      </video>
+      <figcaption><strong id="video-title">${escapeHtml(post.video.title)}</strong> ${escapeHtml(post.video.description)}</figcaption>
+    </figure>\n` : '';
   return `<!doctype html>
 <html lang="es-MX">
 <head>
@@ -116,14 +127,14 @@ function htmlPage(post) {
   <meta name="twitter:description" content="${escapeHtml(post.socialDescription)}">
   <meta name="twitter:image" content="${escapeHtml(post.socialImage)}">
   <meta name="twitter:image:alt" content="${escapeHtml(post.socialImageAlt)}">
-  <link rel="stylesheet" href="../silhouette-blog.css?v=20261108-blog30">
+  <link rel="stylesheet" href="../silhouette-blog.css?v=${post.video ? '20261111-video' : '20261108-blog30'}">
   <script type="application/ld+json">${JSON.stringify(metadata).replace(/</g, '\\u003c')}</script>
 </head>
 <body>
   <header class="site-header"><a class="roraima" href="${site}/" aria-label="Roraima Distribuciones"><img src="${site}/silhouette/roraima-logo-on-light-v5.png" alt="Roraima Distribuciones" width="112" height="56"></a><a class="brand" href="${site}/silhouette/" aria-label="Silhouette"><img src="${site}/silhouette/brand/silhouette-on-light.png" alt="Silhouette" width="186" height="53"></a><nav><a href="${site}/silhouette/">Colección</a><a href="../">Blog</a></nav></header>
   <main><article>
     <header class="article-header"><p class="eyebrow">SILHOUETTE · DISEÑO Y TECNOLOGÍA</p><h1>${escapeHtml(post.title)}</h1><p class="excerpt">${escapeHtml(post.excerpt)}</p><time datetime="${publishedLocal}">${escapeHtml(dateLabel)}</time></header>
-    <figure class="hero"><img${heroClass} src="${escapeHtml(post.image)}" alt="${escapeHtml(post.imageAlt)}"${heroSize}><figcaption>${escapeHtml(post.imageCaption || 'Imagen oficial de Silhouette.')}</figcaption></figure>
+${videoSection}    <figure class="hero"><img${heroClass} src="${escapeHtml(post.image)}" alt="${escapeHtml(post.imageAlt)}"${heroSize}${post.video ? ' loading="lazy" decoding="async"' : ''}><figcaption>${escapeHtml(post.imageCaption || 'Imagen oficial de Silhouette.')}</figcaption></figure>
     <div class="article-content">${post.content}</div>
   </article></main>
   <footer><a href="../">Más artículos Silhouette</a><span>Distribuidora Roraima · México</span></footer>
@@ -145,22 +156,22 @@ for (const filename of filenames) {
   slugs.add(post.slug);
   entries.push(post);
 }
+validateVideoSchedule(entries);
 const due = entries.filter(post => new Date(post.publishAt).getTime() <= now.getTime())
   .sort((a, b) => new Date(b.publishAt).getTime() - new Date(a.publishAt).getTime());
 const report = { now: now.toISOString(), scheduled: entries.length, due: due.map(post => post.slug) };
-if (dryRun) {
-  console.log(JSON.stringify(report));
-  process.exit(0);
-}
+if (!dryRun) await writePublicBlog(due);
+console.log(JSON.stringify(report));
 
-await mkdir(outputDir, { recursive: true });
-const manifest = due.map(post => ({
-  id: post.id, slug: post.slug, title: post.title, excerpt: post.excerpt,
-  content: post.content, image: post.image, status: 'published',
-  createdAt: post.publishAt, updatedAt: post.modifiedAt || post.publishAt,
-}));
-await writeFile(join(outputDir, 'published-posts.js'), `window.__silhouettePublishedPosts=${JSON.stringify(manifest).replace(/</g, '\\u003c')};\n`);
-if (due.length) {
+async function writePublicBlog(due) {
+  await mkdir(outputDir, { recursive: true });
+  const manifest = due.map(post => ({
+    id: post.id, slug: post.slug, title: post.title, excerpt: post.excerpt,
+    content: post.content, image: post.image, status: 'published',
+    createdAt: post.publishAt, updatedAt: post.modifiedAt || post.publishAt,
+  }));
+  await writeFile(join(outputDir, 'published-posts.js'), `window.__silhouettePublishedPosts=${JSON.stringify(manifest).replace(/</g, '\\u003c')};\n`);
+  if (!due.length) return;
   await writeFile(join(outputDir, 'index.html'), indexPage(due));
   for (const post of due) {
     const folder = join(outputDir, post.slug);
@@ -179,4 +190,3 @@ if (due.length) {
   }
   await writeFile(sitemapPath, sitemap);
 }
-console.log(JSON.stringify(report));

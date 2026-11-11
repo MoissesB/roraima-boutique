@@ -1,6 +1,7 @@
-import { readFile, writeFile, mkdir, access } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, access, readdir } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readVideo, validateVideoSchedule } from './silhouette-blog-video.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const source = process.argv[2];
@@ -52,9 +53,10 @@ for (const article of articles) {
   if (!Number.isInteger(article.socialImageWidth) || article.socialImageWidth < 600 || !Number.isInteger(article.socialImageHeight) || article.socialImageHeight < 300) {
     throw new Error(`${slug}: invalid social image dimensions`);
   }
-  if (/<\s*(script|iframe|object|embed|form)\b|\bon[a-z]+\s*=|javascript:/i.test(article.content)) {
+  if (/<\s*(script|iframe|object|embed|form|video|source|track)\b|\bon[a-z]+\s*=|javascript:/i.test(article.content)) {
     throw new Error(`${slug}: unsupported HTML`);
   }
+  const video = readVideo(article.video, slug);
   const filename = join(folder, `${slug}.json`);
   try { await access(filename); throw new Error(`Article already exists: ${slug}`); }
   catch (error) { if (error.code !== 'ENOENT') throw error; }
@@ -72,10 +74,14 @@ for (const article of articles) {
       socialTitle: article.socialTitle, socialDescription: article.socialDescription,
       socialImage: article.socialImage, socialImageAlt: article.socialImageAlt,
       socialImageWidth: article.socialImageWidth, socialImageHeight: article.socialImageHeight,
+      ...(video ? { video } : {}),
     },
   });
 }
 if (new Set(prepared.map(item => item.article.slug)).size !== prepared.length) throw new Error('Duplicate slug in batch');
+const scheduled = (await readdir(folder)).filter(name => name.endsWith('.json'));
+const existing = await Promise.all(scheduled.map(async name => JSON.parse(await readFile(join(folder, name), 'utf8'))));
+validateVideoSchedule([...existing, ...prepared.map(item => item.article)]);
 for (const item of prepared) {
   await writeFile(item.path, JSON.stringify(item.article, null, 2) + '\n', { flag: 'wx' });
   console.log(`${item.article.slug} => ${item.article.publishAt} (${item.article.publishAtMexico} Mexico City)`);
