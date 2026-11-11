@@ -10,3 +10,25 @@
 .article-content .button{display:inline-block;background:#171717;color:#fff;text-decoration:none;padding:8px 15px;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
 .article-content .button.secondary{background:transparent;border:1px solid #171717;color:#171717}
 .article-content .source-note{font-size:14px;color:#666;border-top:1px solid #ddd9d3;padding-top:22px;margin-top:45px}
+
+.article-video {
+  max-width: 900px;
+  margin: 0 auto 55px;
+}
+.article-video video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #171717;
+}
+.article-video figcaption {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #555;
+}
+
+.article-video figcaption strong { display: block; }
+.article-content .video-transcript { margin: 28px 0 40px; }
+.video-transcript summary { font-weight: 600; cursor: pointer; }
+.video-transcript p:first-of-type { margin-top: 16px; }
