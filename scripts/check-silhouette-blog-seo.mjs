@@ -49,7 +49,7 @@ for (const post of posts) {
   }
 
   const html = await readFile(path, 'utf8');
-  const cssVersion = video ? '20261111-video' : '20261108-blog30';
+  const cssVersion = video?.previewUrl ? '20261111-preview' : video ? '20261111-video' : '20261108-blog30';
   assert(html.includes(`silhouette-blog.css?v=${cssVersion}`), `${post.slug}: stale CSS reference`);
   for (const logo of ['/silhouette/roraima-logo-on-light-v5.png', '/silhouette/brand/silhouette-on-light.png']) {
     assert(html.includes(logo), `${post.slug}: missing ${logo}`);
@@ -101,6 +101,10 @@ for (const post of posts) {
     assert.deepEqual(structured.video.thumbnailUrl, [video.posterUrl]);
     assert.equal(structured.video.duration, `PT${video.durationSeconds}S`);
     assert.equal(structured.video.uploadDate, video.uploadDate ?? structured.datePublished);
+    if (video.previewUrl) {
+      assert(html.includes(`data-src="${video.previewUrl}"`), `${post.slug}: preview source`);
+      assert(html.includes('data-video-start') && html.includes('silhouette-blog-player.js'), `${post.slug}: preview controls`);
+    }
   } else {
     assert.equal(structured.video, undefined);
   }
