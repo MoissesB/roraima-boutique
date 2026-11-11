@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile, readdir, access } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { setTimeout as delay } from 'node:timers/promises';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const queueDir = join(root, 'content', 'silhouette-blog', 'scheduled');
@@ -39,6 +40,7 @@ for (const post of posts) {
   const url = `https://roraimamx.com/silhouette/blog/${post.slug}/`;
   const path = join(outputDir, post.slug, 'index.html');
   const dueNow = new Date(post.publishAt) <= now;
+  const video = post.video;
   const inSitemap = sitemap.includes(`<loc>${url}</loc>`);
   assert.equal(inSitemap, dueNow, `${post.slug}: sitemap publication state`);
   if (!dueNow) {
@@ -47,7 +49,8 @@ for (const post of posts) {
   }
 
   const html = await readFile(path, 'utf8');
-  assert(html.includes('silhouette-blog.css?v=20261108-blog30'), `${post.slug}: stale CSS reference`);
+  const cssVersion = video ? '20261111-video' : '20261108-blog30';
+  assert(html.includes(`silhouette-blog.css?v=${cssVersion}`), `${post.slug}: stale CSS reference`);
   for (const logo of ['/silhouette/roraima-logo-on-light-v5.png', '/silhouette/brand/silhouette-on-light.png']) {
     assert(html.includes(logo), `${post.slug}: missing ${logo}`);
   }
@@ -86,8 +89,60 @@ for (const post of posts) {
   assert.equal(structured.headline, post.title);
   assert.equal(structured.description, post.seoDescription);
   assert.equal(structured.mainEntityOfPage, url);
+  if (video) {
+    assert(html.includes(`poster="${video.posterUrl}"`), `${post.slug}: video poster`);
+    assert(html.includes(`<source src="${video.url}" type="video/mp4">`), `${post.slug}: video source`);
+    assert(html.includes(`<track src="${video.captionsUrl}" kind="captions" srclang="es-MX"`), `${post.slug}: captions`);
+    assert(/<video\b[^>]*\bcontrols\b/.test(html), `${post.slug}: video controls`);
+    assert.equal(structured.video?.['@type'], 'VideoObject');
+    assert.equal(structured.video.name, video.title);
+    assert.equal(structured.video.description, video.description);
+    assert.equal(structured.video.contentUrl, video.url);
+    assert.deepEqual(structured.video.thumbnailUrl, [video.posterUrl]);
+    assert.equal(structured.video.duration, `PT${video.durationSeconds}S`);
+    assert.equal(structured.video.uploadDate, video.uploadDate ?? structured.datePublished);
+  } else {
+    assert.equal(structured.video, undefined);
+  }
   assert.equal(new Date(structured.datePublished).toISOString().replace('.000Z', 'Z'), post.publishAt);
   assert.equal(new Date(structured.dateModified).toISOString().replace('.000Z', 'Z'), post.modifiedAt || post.publishAt);
   console.log(`OK ${post.slug}`);
 }
 console.log(`SEO verified: ${due.length} published, ${posts.length - due.length} scheduled`);
+
+if (process.argv.includes('--live') && due.some(post => post.video)) {
+  const paths = [
+    'sitemap.xml',
+    'silhouette/blog/index.html',
+    'silhouette/blog/published-posts.js',
+    ...due.filter(post => post.video).map(post => `silhouette/blog/${post.slug}/index.html`),
+  ];
+  const normalize = value => value.replaceAll('\r\n', '\n').trimEnd();
+  const expected = await Promise.all(paths.map(async path => normalize(await readFile(join(root, path), 'utf8'))));
+  const pending = new Set(paths.keys());
+  const failures = new Map();
+  for (let attempt = 0; attempt < 5 && pending.size; attempt++) {
+    if (attempt) await delay(15_000);
+    const indexes = [...pending];
+    const verify = Date.now();
+    for (let start = 0; start < indexes.length; start += 8) {
+      await Promise.all(indexes.slice(start, start + 8).map(async index => {
+        const path = paths[index];
+        const publicPath = path.endsWith('/index.html') ? path.slice(0, -'index.html'.length) : path;
+        try {
+          const response = await fetch(`https://roraimamx.com/${publicPath}?check=${verify}`, {
+            headers: { 'Cache-Control': 'no-cache' }, signal: AbortSignal.timeout(10_000),
+          });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          if (normalize(await response.text()) !== expected[index]) throw new Error('live content differs from this deploy');
+          pending.delete(index);
+          failures.delete(index);
+        } catch (error) {
+          failures.set(index, `${publicPath}: ${error.message}`);
+        }
+      }));
+    }
+  }
+  if (failures.size) throw new Error(`Silhouette live verification failed:\n${[...failures.values()].join('\n')}`);
+  console.log(`Live Silhouette publication verified: ${paths.length - 3} articles with video, index, manifest and sitemap`);
+}
