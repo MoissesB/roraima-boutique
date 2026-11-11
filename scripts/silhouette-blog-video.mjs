@@ -16,14 +16,18 @@ export function readVideo(video, slug) {
       || new Date(uploadDate).toISOString().replace('.000Z', 'Z') !== uploadDate)) {
     throw new Error(`${slug}: video uploadDate must be a valid UTC timestamp`);
   }
-  for (const field of ['url', 'posterUrl', 'captionsUrl']) {
+  const mediaFields = ['url', 'posterUrl', 'captionsUrl'];
+  if (video.previewUrl !== undefined) mediaFields.push('previewUrl');
+  for (const field of mediaFields) {
     const url = typeof video[field] === 'string' ? URL.parse(video[field]) : null;
     if (!url || url.protocol !== 'https:'
         || url.username || url.password || url.hash) {
       throw new Error(`${slug}: ${field} must be a public HTTPS URL`);
     }
   }
-  return { title, description, durationSeconds, ...(uploadDate ? { uploadDate } : {}), url: video.url, posterUrl: video.posterUrl, captionsUrl: video.captionsUrl };
+  return { title, description, durationSeconds, ...(uploadDate ? { uploadDate } : {}),
+    url: video.url, posterUrl: video.posterUrl, captionsUrl: video.captionsUrl,
+    ...(video.previewUrl ? { previewUrl: video.previewUrl } : {}) };
 }
 
 export function validateVideoSchedule(posts) {

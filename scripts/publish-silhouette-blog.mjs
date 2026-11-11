@@ -90,12 +90,24 @@ function htmlPage(post) {
     isAccessibleForFree: true,
     ...(post.video ? { video: videoMetadata(post.video, publishedLocal) } : {}),
   };
+  const preview = post.video?.previewUrl ? `
+        <div class="article-video-preview" data-video-preview hidden>
+          <video muted loop playsinline preload="none" poster="${escapeHtml(post.image)}" data-src="${escapeHtml(post.video.previewUrl)}" aria-hidden="true"></video>
+          <button class="article-video-start" type="button" data-video-start>
+            <span class="article-video-play-icon" aria-hidden="true"></span>
+            <span>Descubre qué cambia</span>
+            <small>Ver video con sonido</small>
+          </button>
+          <button class="article-video-motion" type="button" data-video-motion hidden>Pausar adelanto</button>
+        </div>` : '';
   const videoSection = post.video ? `    <figure class="article-video" id="video">
-      <video controls playsinline preload="metadata"${new URL(post.video.captionsUrl).origin === site ? '' : ' crossorigin="anonymous"'} poster="${escapeHtml(post.video.posterUrl)}" aria-labelledby="video-title">
+      <div class="article-video-player">
+      <video controls playsinline preload="metadata"${new URL(post.video.captionsUrl).origin === site ? '' : ' crossorigin="anonymous"'} poster="${escapeHtml(post.video.posterUrl)}" aria-labelledby="video-title" data-video-full>
         <source src="${escapeHtml(post.video.url)}" type="video/mp4">
         <track src="${escapeHtml(post.video.captionsUrl)}" kind="captions" srclang="es-MX" label="Español (México)">
         <a href="${escapeHtml(post.video.url)}">Abrir video</a>
-      </video>
+      </video>${preview}
+      </div>
       <figcaption><strong id="video-title">${escapeHtml(post.video.title)}</strong> ${escapeHtml(post.video.description)}</figcaption>
     </figure>\n` : '';
   return `<!doctype html>
@@ -127,7 +139,7 @@ function htmlPage(post) {
   <meta name="twitter:description" content="${escapeHtml(post.socialDescription)}">
   <meta name="twitter:image" content="${escapeHtml(post.socialImage)}">
   <meta name="twitter:image:alt" content="${escapeHtml(post.socialImageAlt)}">
-  <link rel="stylesheet" href="../silhouette-blog.css?v=${post.video ? '20261111-video' : '20261108-blog30'}">
+  <link rel="stylesheet" href="../silhouette-blog.css?v=${preview ? '20261111-preview' : post.video ? '20261111-video' : '20261108-blog30'}">${preview ? '\n  <script src="../silhouette-blog-player.js" defer></script>' : ''}
   <script type="application/ld+json">${JSON.stringify(metadata).replace(/</g, '\\u003c')}</script>
 </head>
 <body>
