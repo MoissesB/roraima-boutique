@@ -443,6 +443,8 @@ img { display: block; width: 100%; }
 .marquee-frame-image { width: 210px; height: 64px; object-fit: contain; mix-blend-mode: multiply; }
 .marquee-brand-logo { width: 168px; max-height: 48px; object-fit: contain; }
 .marquee-brand-logo-silhouette { width: 176px; }
+.marquee-brand-logo-jisco { width: 146px; max-height: 48px; }
+.marquee-brand-wordmark { font-family: Manrope, Arial, sans-serif; font-size: clamp(25px, 2.4vw, 34px); font-weight: 600; letter-spacing: -.08em; line-height: 1; color: #102a25; white-space: nowrap; }
 .marquee-brand-pair:hover { opacity: .65; transform: scale(1.025); }
 .brand-marquee:hover .marquee-loop { animation-play-state: paused; }
 @keyframes marquee { to { transform: translateX(-50%); } }
@@ -616,7 +618,7 @@ img { display: block; width: 100%; }
 .alfred-new-home__models strong { font-size: 15px; font-weight: 600; letter-spacing: .01em; }
 
 .focus-showcase { padding: clamp(74px, 8vw, 128px) max(24px, 5vw); background: white; border-bottom: 1px solid var(--line); }
-.focus-showcase > header { display: grid; grid-template-columns: .55fr 1.2fr .75fr; gap: 45px; align-items: start; margin-bottom: 48px; }
+.focus-showcase > header { display: grid; grid-template-columns: .55fr 1.95fr; gap: 45px; align-items: start; margin-bottom: 48px; }
 .focus-showcase > header .eyebrow { margin-top: 8px; }
 .focus-showcase h2 { margin: 0; max-width: 760px; font-size: clamp(43px, 5vw, 76px); line-height: .92; letter-spacing: -.065em; font-weight: 500; }
 .focus-showcase > header p { max-width: 440px; margin: 8px 0 0; color: #706a65; font-size: 13px; line-height: 1.65; }

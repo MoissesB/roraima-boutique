@@ -1,6 +1,7 @@
 export const ORDER_SCHEMA_VERSION = 1;
 
-export const ORDER_BRANDS = Object.freeze(["silhouette", "alfred-kerbs"]);
+export const ORDER_BRANDS = Object.freeze(["silhouette", "alfred-kerbs", "jisco", "akoni"]);
+export const ODOO_ORDER_BRANDS = Object.freeze(["silhouette", "alfred-kerbs"]);
 
 export const LEGACY_ORDER_SOURCES = Object.freeze([
   { key: "roraima-order-v1", brand: null },
@@ -67,6 +68,8 @@ export function emptyOrderState(userId = null) {
     carts: {
       silhouette: { brand: "silhouette", items: [], updatedAt: null },
       "alfred-kerbs": { brand: "alfred-kerbs", items: [], updatedAt: null },
+      jisco: { brand: "jisco", items: [], updatedAt: null },
+      akoni: { brand: "akoni", items: [], updatedAt: null },
     },
     optics: [],
     activeOpticId: null,

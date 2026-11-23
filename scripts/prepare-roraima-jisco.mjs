@@ -23,7 +23,7 @@ let css = await readFile(join(source, 'styles.css'), 'utf8');
 html = replaceOne(html, /  <div class="innova-mini-header">[\s\S]*?(?=  <header class="header">)/, `  <div class="roraima-mini-header">
     <a class="roraima-mini-home" href="/#inicio" aria-label="Volver al inicio de Roraima Distribuciones"><img src="/assets/roraima-distribuciones-oficial-dark.png" alt="Roraima Distribuciones"></a>
     <div class="roraima-mini-context"><span>COLECCIÓN OFICIAL · JISCO</span><nav class="roraima-brand-rail" aria-label="Cambiar de catálogo"><a href="/alfred-kerbs/">ALFRED KERBS</a><a href="/silhouette/">SILHOUETTE</a><a class="is-current" aria-current="page" href="/jisco/">JISCO</a><a href="/akoni/">AKONI</a></nav></div>
-    <nav class="roraima-mini-nav" aria-label="Navegación global de Roraima Distribuciones"><details class="roraima-mini-menu"><summary>MARCAS <span aria-hidden="true">⌄</span></summary><div><a href="/alfred-kerbs/">Alfred Kerbs</a><a href="/silhouette/">Silhouette</a><a href="/jisco/">JISCO</a><a href="/akoni/">AKONI</a></div></details><a class="roraima-mini-back" href="/#inicio">RORAIMA DISTRIBUCIONES</a></nav>
+    <nav class="roraima-mini-nav" aria-label="Navegación global de Roraima Distribuciones"><details class="roraima-mini-menu"><summary>MARCAS <span aria-hidden="true">⌄</span></summary><div><a href="/alfred-kerbs/">Alfred Kerbs</a><a href="/silhouette/">Silhouette</a><a href="/jisco/">JISCO</a><a href="/akoni/">AKONI</a></div></details><a class="roraima-mini-back" href="/#inicio">RORAIMA DISTRIBUCIONES</a><a class="roraima-mini-audience" href="/profesionales/vista/jisco/">Para ópticas</a></nav>
   </div>
 `, 'Cabecera Innova');
 html = html.replaceAll('Innova Eyewear', 'Roraima Distribuciones').replaceAll('Innova Boutique', 'Roraima Distribuciones').replaceAll('Innova', 'Roraima').replaceAll('INNOVA EYEWEAR', 'RORAIMA DISTRIBUCIONES');
@@ -63,6 +63,9 @@ css += `\n/* Marco de Roraima para la copia publicada de JISCO. */
 .header{top:34px}.home-hero__shade{background:linear-gradient(90deg,rgba(12,11,11,.78),rgba(12,11,11,.28) 65%,rgba(12,11,11,.1))}
 @media(max-width:920px){.roraima-mini-context>span{display:none}.roraima-mini-nav{gap:12px}}
 @media(max-width:760px){.roraima-mini-header{height:40px;padding:0 10px;grid-template-columns:auto minmax(0,1fr) auto;gap:5px}.roraima-mini-home,.roraima-mini-home img{width:49px}.roraima-mini-home img{height:30px}.roraima-mini-context{justify-content:center}.roraima-brand-rail{gap:3px}.roraima-brand-rail a{padding:6px 5px;font-size:7px;letter-spacing:0}.roraima-mini-menu{display:none}.roraima-mini-back{font-size:8px;letter-spacing:0}.header{top:40px}}
+.roraima-mini-audience{display:inline-flex;align-items:center;min-height:25px;padding:5px 8px;border:1px solid #8d8985;color:#fff;text-decoration:none;white-space:nowrap}
+.roraima-mini-audience:hover,.roraima-mini-audience:focus-visible{background:#f2bd24;border-color:#f2bd24;color:#151414!important}
+@media(max-width:760px){.roraima-mini-back{display:none}.roraima-mini-audience{font-size:8px;padding:5px}}
 `;
 
 await cp(source, target, { recursive: true });

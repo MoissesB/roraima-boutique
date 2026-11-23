@@ -1,6 +1,8 @@
 const BRAND_ROUTES = Object.freeze({
   "alfred-kerbs": "/profesionales/alfred-kerbs/",
   silhouette: "/profesionales/silhouette/catalogo/",
+  jisco: "/profesionales/vista/jisco/",
+  akoni: "/profesionales/vista/akoni/",
 });
 
 const ACCOUNT_ICON = `
@@ -89,6 +91,26 @@ function installStyles() {
     .roraima-professional-advisor-hidden {
       display: none !important;
     }
+    .innova-global-header .roraima-professional-consumer-link {
+      display: inline-flex !important;
+      align-items: center;
+      min-height: 30px;
+      padding: 5px 10px;
+      border: 1px solid rgba(255,255,255,.6);
+      color: #fff !important;
+      font: 700 9px/1.2 Inter, Arial, sans-serif;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .innova-global-header .roraima-professional-consumer-link:hover,
+    .innova-global-header .roraima-professional-consumer-link:focus-visible {
+      background: #f2bd24;
+      border-color: #f2bd24;
+      color: #151414 !important;
+    }
+    .innova-global-header .roraima-professional-consumer-link.is-mobile-quick {
+      display: none !important;
+    }
     .roraima-professional-account {
       min-height: 30px;
       display: inline-flex !important;
@@ -168,16 +190,38 @@ function installStyles() {
         white-space: nowrap;
       }
     }
+    @media (max-width: 760px) {
+      .innova-global-header { grid-template-columns: auto minmax(0, 1fr) auto auto auto !important; gap: 4px !important; padding-inline: 8px !important; }
+      .innova-global-header .innova-global-mobile { display: block !important; }
+      .innova-global-header .roraima-professional-consumer-link.is-mobile-quick {
+        display: inline-flex !important;
+        font-size: 7px;
+        padding: 4px 5px;
+        min-height: 25px;
+      }
+      .innova-global-header .roraima-brand-rail { gap: 2px; }
+      .innova-global-header .roraima-brand-rail a { font-size: 7px; letter-spacing: 0; padding: 5px 3px; }
+    }
   `;
   document.head.appendChild(style);
 }
 
 function updateBrandRail(header) {
-  header.querySelectorAll(".roraima-brand-rail a").forEach((anchor) => {
+  const rail = header.querySelector(".roraima-brand-rail");
+  if (!rail) return;
+  rail.querySelectorAll("a").forEach((anchor) => {
     const label = labelOf(anchor);
     if (label.includes("alfred")) topRoute(anchor, brandRoute("alfred-kerbs"));
     if (label.includes("silhouette")) topRoute(anchor, brandRoute("silhouette"));
   });
+  for (const [label, href] of [["JISCO", brandRoute("jisco")], ["AKONI", brandRoute("akoni")]]) {
+    if (rail.querySelector(`a[href="${href}"]`)) continue;
+    const link = document.createElement("a");
+    link.textContent = label;
+    link.setAttribute("aria-label", `Catálogo para ópticas de ${label}`);
+    topRoute(link, href);
+    rail.appendChild(link);
+  }
 }
 
 function updateOrderLinks(header) {
@@ -238,6 +282,25 @@ function updateHeader() {
   updateBrandRail(header);
   updateOrderLinks(header);
 
+  const consumerHref = document.documentElement.dataset.roraimaProfessionalBrand === "silhouette"
+    ? "/silhouette/#/catalogo"
+    : "/alfred-kerbs/catalogo/";
+  for (const container of [header.querySelector(".innova-global-nav"), header.querySelector(".innova-global-mobile > div")]) {
+    if (!container || container.querySelector(".roraima-professional-consumer-link")) continue;
+    const link = document.createElement("a");
+    link.className = "roraima-professional-consumer-link";
+    link.textContent = "Para consumidor";
+    topRoute(link, consumerHref);
+    container.appendChild(link);
+  }
+  if (!header.querySelector(".roraima-professional-consumer-link.is-mobile-quick")) {
+    const quickLink = document.createElement("a");
+    quickLink.className = "roraima-professional-consumer-link is-mobile-quick";
+    quickLink.textContent = "Para consumidor";
+    topRoute(quickLink, consumerHref);
+    header.appendChild(quickLink);
+  }
+
   const desktop = header.querySelector(".innova-global-nav");
   if (desktop && !desktop.querySelector(".roraima-professional-account")) {
     desktop.appendChild(accountLink());
@@ -295,7 +358,7 @@ function installProfessionalNavigation() {
   document.documentElement.dataset.roraimaProfessionalNavigation = "true";
   document.addEventListener("click", (event) => {
     const link = event.target instanceof Element
-      ? event.target.closest("a[href^='/profesionales/']")
+      ? event.target.closest("a[href^='/profesionales/'], a.roraima-professional-consumer-link")
       : null;
     if (!link || !link.closest(".innova-global-header")) return;
     event.preventDefault();

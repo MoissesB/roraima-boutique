@@ -1,8 +1,10 @@
-import { ORDER_BRANDS } from "./order-core.mjs?v=20261028-stock-1";
+import { ORDER_BRANDS, ODOO_ORDER_BRANDS } from "./order-core.mjs?v=20261123-fourbrands-1";
 
 const BRAND_LABELS = {
   silhouette: "Silhouette",
   "alfred-kerbs": "Alfred Kerbs",
+  jisco: "JISCO",
+  akoni: "AKONI",
 };
 
 function escapeHtml(value) {
@@ -30,6 +32,7 @@ const BACKORDER_COPY = "Las piezas sin existencias se surten sobre pedido; Rorai
 // Stock line for one cart item (Odoo mode, signed in).
 function renderStock(item, ctx) {
   if (!ctx.signedIn) return "";
+  if (!ODOO_ORDER_BRANDS.includes(item.brand)) return '<div class="item-stock"><span class="stock">Integración de inventario y envío pendiente. La referencia permanece en tu selección y en el PDF.</span></div>';
   const entry = ctx.stockByKey[item.key];
   const lineError = ctx.errorLines.get(item.key);
   let body = "";
@@ -174,6 +177,10 @@ function checkoutBlockers(snapshot) {
   let stockMissing = false;
   for (const brand of ORDER_BRANDS) {
     const items = snapshot.state.carts[brand]?.items || [];
+    if (!ODOO_ORDER_BRANDS.includes(brand) && items.length) {
+      blockers.push(`${BRAND_LABELS[brand]}: esta marca aún no está conectada al envío de Odoo; descarga el PDF de la selección.`);
+      continue;
+    }
     for (const item of items) {
       const entry = byKey[item.key];
       const label = item.name || item.model || item.sku;
@@ -502,7 +509,7 @@ export function mountOrderUI({
             </form>
           </section>
           <section class="submit-order">
-            <p>Roraima recibirá una sola solicitud con las referencias de ambas marcas. No se aplican mínimos, precios, stock ni pagos en este portal.</p>
+            <p>Roraima recibirá una sola solicitud con las referencias seleccionadas. No se aplican mínimos, precios, stock ni pagos en este portal.</p>
             <button type="button" data-submit-order ${total < 1 || !latest.state.activeOpticId || latest.status === "submitting" || submitted ? "disabled" : ""}>${submitted ? "Solicitud enviada" : "Enviar pedido para revisión"}</button>
           </section>`}
           ${inline ? "" : `<a class="global-link" href="${visualPreview || odoo ? "/profesionales/vista/pedido/" : "/profesionales/pedidos/"}">Abrir vista global Roraima →</a>`}
@@ -564,7 +571,7 @@ export function mountOrderUI({
       button.disabled = true;
       feedback.textContent = "Preparando PDF…";
       try {
-        const { downloadVisualOrderPdf } = await import("./visual-order-pdf.mjs?v=20261008-3");
+        const { downloadVisualOrderPdf } = await import("./visual-order-pdf.mjs?v=20261123-fourbrands-1");
         const items = ORDER_BRANDS.flatMap((entry) => latest.state.carts[entry]?.items || []);
         await downloadVisualOrderPdf({ items, customer: visualCustomer, signature: visualSignature });
         feedback.textContent = "PDF descargado. El pedido no se ha enviado a Roraima.";

@@ -81,15 +81,15 @@
   window.__RORAIMA_AUDIENCE_UI__ = true;
 
   var officialLocator = "/opticas/";
-  var professionalRoute = "/profesionales/vista/silhouette/";
   var isSilhouette = path.indexOf("/silhouette/") === 0;
   var isAlfred = path.indexOf("/alfred-kerbs/") === 0;
   if (!isSilhouette && !isAlfred && path !== "/") return;
+  var professionalRoute = isAlfred ? "/profesionales/vista/alfred-kerbs/" : "/profesionales/vista/silhouette/";
 
   if (!document.querySelector("link[data-roraima-audience-css]")) {
     var stylesheet = document.createElement("link");
     stylesheet.rel = "stylesheet";
-    stylesheet.href = "/assets/roraima-audience.css?v=20261008-collapsible-2";
+    stylesheet.href = "/assets/roraima-audience.css?v=20261123-fourbrands-1";
     stylesheet.dataset.roraimaAudienceCss = "true";
     document.head.appendChild(stylesheet);
   }
@@ -205,6 +205,49 @@
     document.body.appendChild(rail);
   }
 
+  function ensureBrandHeader() {
+    if (!isSilhouette && !isAlfred) return;
+    var header = document.querySelector(".innova-global-header");
+    if (!header) return;
+    var home = header.querySelector(".innova-global-home");
+    if (home) home.setAttribute("href", "/#inicio");
+    var rail = header.querySelector(".roraima-brand-rail");
+    if (rail) {
+      rail.querySelectorAll("a").forEach(function (link) {
+        var label = String(link.textContent || "").trim().toLowerCase();
+        if (label === "alfred kerbs") link.setAttribute("href", "/alfred-kerbs/");
+        if (label === "silhouette") link.setAttribute("href", "/silhouette/");
+      });
+      [["JISCO", "/jisco/"], ["AKONI", "/akoni/"]].forEach(function (brand) {
+        if (rail.querySelector('a[href="' + brand[1] + '"]')) return;
+        var link = document.createElement("a");
+        link.href = brand[1];
+        link.textContent = brand[0];
+        link.setAttribute("aria-label", "Catálogo para consumidor de " + brand[0]);
+        rail.appendChild(link);
+      });
+    }
+    var desktop = header.querySelector(".innova-global-nav");
+    var mobile = header.querySelector(".innova-global-mobile > div");
+    [desktop, mobile].forEach(function (container) {
+      if (!container || container.querySelector(".roraima-header-audience")) return;
+      var link = document.createElement("a");
+      link.className = "roraima-header-audience";
+      link.href = professionalRoute;
+      link.textContent = "Para ópticas";
+      link.setAttribute("aria-label", "Abrir vista para ópticas de " + (isAlfred ? "Alfred Kerbs" : "Silhouette"));
+      container.appendChild(link);
+    });
+    if (!header.querySelector(".roraima-header-audience--mobile")) {
+      var mobileLink = document.createElement("a");
+      mobileLink.className = "roraima-header-audience roraima-header-audience--mobile";
+      mobileLink.href = professionalRoute;
+      mobileLink.textContent = "Para ópticas";
+      mobileLink.setAttribute("aria-label", "Abrir vista para ópticas de " + (isAlfred ? "Alfred Kerbs" : "Silhouette"));
+      header.appendChild(mobileLink);
+    }
+  }
+
   function removeUpperAudienceSwitch() {
     if (!isSilhouette) return;
     document.querySelectorAll(".roraima-audience-switch").forEach(function (node) { node.remove(); });
@@ -224,6 +267,7 @@
     decorateOpticianAction();
     removeUpperAudienceSwitch();
     ensureConsumerRail();
+    ensureBrandHeader();
   }
 
   document.addEventListener("click", function (event) {

@@ -83,7 +83,7 @@ export async function downloadVisualOrderPdf({ items, customer, signature }) {
     if (item.brand !== currentBrand) {
       currentBrand = item.brand;
       y -= 8;
-      line(currentBrand === "silhouette" ? "SILHOUETTE" : "ALFRED KERBS", { font: bold, size: 10 });
+      line(({ silhouette: "SILHOUETTE", "alfred-kerbs": "ALFRED KERBS", jisco: "JISCO", akoni: "AKONI" })[currentBrand] || currentBrand.toUpperCase(), { font: bold, size: 10 });
     }
     const quantity = Math.max(1, Number(item.quantity) || 1);
     total += quantity;

@@ -1,13 +1,15 @@
-import { mountCatalogAdapter } from "./catalog-adapter.mjs?v=20261028-stock-1";
-import { installProfessionalHeader } from "./professional-header.mjs?v=20261008-visual-7";
+import { mountCatalogAdapter } from "./catalog-adapter.mjs?v=20261123-fourbrands-1";
+import { installProfessionalHeader } from "./professional-header.mjs?v=20261123-fourbrands-1";
+import { installProfessionalCollection } from "./professional-collection.mjs?v=20261123-1";
 
 try {
   const brand = window.parent !== window
     && window.parent.location.origin === window.location.origin
     ? window.parent.document.body?.dataset.professionalBrand
     : null;
-  if (brand === "silhouette" || brand === "alfred-kerbs") {
-    installProfessionalHeader({ brand });
+  if (["silhouette", "alfred-kerbs", "jisco", "akoni"].includes(brand)) {
+    if (brand === "jisco" || brand === "akoni") installProfessionalCollection({ brand });
+    else installProfessionalHeader({ brand });
     mountCatalogAdapter({ brand, mount: false });
   }
 } catch {

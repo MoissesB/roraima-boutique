@@ -1,5 +1,5 @@
 const ENTRY_ID = "roraima-professional-frame-entry";
-const ENTRY_SRC = "/assets/b2b/professional-frame-entry.mjs?v=20261028-stock-1";
+const ENTRY_SRC = "/assets/b2b/professional-frame-entry.mjs?v=20261123-fourbrands-1";
 
 function enhanceFrame(frame) {
   try {
@@ -42,10 +42,29 @@ function promoteProfessionalRoute(frame) {
   }
 }
 
+function promoteConsumerRoute(frame) {
+  try {
+    const next = new URL(frame.contentWindow.location.href);
+    if (next.origin !== window.location.origin) return false;
+    if ((next.pathname === "/jisco/" || next.pathname === "/akoni/")
+      && !next.searchParams.has("audience") && !next.searchParams.has("embedded")) {
+      window.location.href = `${next.pathname}${next.search}${next.hash}`;
+      return true;
+    }
+    if (document.body?.dataset.professionalBrand !== "silhouette" || next.pathname !== "/silhouette/") return false;
+    if (next.searchParams.has("audience") || next.searchParams.has("embedded")) return false;
+    if (next.hash !== "#/catalogo") return false;
+    window.location.href = `${next.pathname}${next.search}${next.hash}`;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function installProfessionalFrame(frame) {
   if (!frame) return;
   frame.addEventListener("load", () => {
-    if (!promoteProfessionalRoute(frame)) enhanceFrame(frame);
+    if (!promoteProfessionalRoute(frame) && !promoteConsumerRoute(frame)) enhanceFrame(frame);
   });
   // Avoid enhancing the transient about:blank document before the real catalog loads.
   try {

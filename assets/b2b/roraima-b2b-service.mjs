@@ -1,6 +1,7 @@
 import {
   LEGACY_ORDER_SOURCES,
   ORDER_BRANDS,
+  ODOO_ORDER_BRANDS,
   applyLegacyBrandSnapshot,
   buildOrderSubmission,
   cartCount,
@@ -12,7 +13,7 @@ import {
   normalizeOrderState,
   parseLegacyStorage,
   replaceBrandCart,
-} from "./order-core.mjs?v=20261028-stock-1";
+} from "./order-core.mjs?v=20261123-fourbrands-1";
 import { apiItem, createOdooClient } from "./odoo-client.mjs?v=20261028-stock-1";
 
 function createId(prefix = "id") {
@@ -339,7 +340,7 @@ export function createRoraimaB2BService({
 
   async function refreshStock() {
     if (!odooClient || account.status !== "signed-in") return stock;
-    const items = cartItems().slice(0, 200).map(apiItem);
+    const items = cartItems().filter((item) => ODOO_ORDER_BRANDS.includes(item.brand)).slice(0, 200).map(apiItem);
     if (!items.length) {
       stock = { status: "ready", byKey: {}, error: null };
       notify();
@@ -420,6 +421,9 @@ export function createRoraimaB2BService({
   async function runOdooCheckout({ notes = "", reference = "" } = {}) {
     if (!initialized) await initialize();
     if (account.status !== "signed-in") throw new Error("Inicia sesión para enviar tu pedido.");
+    if (cartItems().some((item) => !ODOO_ORDER_BRANDS.includes(item.brand))) {
+      throw new Error("JISCO y AKONI aún no están conectados al inventario ni al envío de Odoo. Conserva la selección y descarga el PDF mientras se habilita esa integración.");
+    }
     const items = cartItems().map((item) => ({ ...apiItem(item), quantity: item.quantity }));
     if (!items.length) throw new Error("Añade al menos una referencia al pedido.");
     const payload = {
@@ -611,6 +615,9 @@ export function createRoraimaB2BService({
     async submitOrder({ idempotencyKey = null, notes = "", reference = "" } = {}) {
       if (odooMode()) return submitOdooOrder({ notes, reference });
       if (visualPreviewMode()) throw new Error("El envío de pedidos se habilitará al conectar el portal profesional.");
+      if (cartItems().some((item) => !ODOO_ORDER_BRANDS.includes(item.brand))) {
+        throw new Error("JISCO y AKONI permanecen como selección visual hasta integrar sus referencias en el servidor de pedidos.");
+      }
       if (!initialized) await initialize();
       if (!session?.user?.id) throw new Error("Se requiere una sesión Supabase activa.");
       const payload = buildOrderSubmission(state);
