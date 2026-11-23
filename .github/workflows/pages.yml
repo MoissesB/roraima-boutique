@@ -33,6 +33,15 @@ jobs:
           rsync -a --include='frame-0000.jpg' --exclude='frame-*.jpg' --exclude='/.git/' --exclude='/.github/' --exclude='/content/' --exclude='/scripts/' --exclude='/silhouette/assets/local-blog-preview.js' --exclude='/.site-artifact/' ./ .site-artifact/
           sed -i '/local-blog-preview.js/d' .site-artifact/silhouette/index.html
           node scripts/prepare-silhouette-pages-assets.mjs .site-artifact
+      - name: Obtener catálogo JISCO aprobado
+        uses: actions/checkout@v4
+        with:
+          repository: MoissesB/innova-jisco-catalogo
+          ref: aa2a2e6d786a9ff59089226ad81566af7bf79d12
+          path: .jisco-source
+          persist-credentials: false
+      - name: Integrar JISCO solo en el artefacto Roraima
+        run: node scripts/prepare-roraima-jisco.mjs .jisco-source/public .site-artifact/jisco
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
