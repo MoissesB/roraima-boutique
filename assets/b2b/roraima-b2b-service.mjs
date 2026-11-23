@@ -1,5 +1,6 @@
 import {
   LEGACY_ORDER_SOURCES,
+  ACTIVE_ORDER_BRANDS,
   ORDER_BRANDS,
   ODOO_ORDER_BRANDS,
   applyLegacyBrandSnapshot,
@@ -309,7 +310,7 @@ export function createRoraimaB2BService({
   }
 
   function cartItems() {
-    return ORDER_BRANDS.flatMap((brand) => state.carts[brand].items);
+    return ACTIVE_ORDER_BRANDS.flatMap((brand) => state.carts[brand].items);
   }
 
   function setAccount(next) {
@@ -389,7 +390,7 @@ export function createRoraimaB2BService({
       })),
     ].slice(-20);
     enqueueMutation((current, changedAt) => {
-      for (const brand of ORDER_BRANDS) {
+      for (const brand of ACTIVE_ORDER_BRANDS) {
         const before = current.carts[brand].items.length;
         current.carts[brand].items = current.carts[brand].items.filter((item) => !keys.has(item.key));
         if (current.carts[brand].items.length !== before) current.carts[brand].updatedAt = changedAt;
@@ -449,7 +450,7 @@ export function createRoraimaB2BService({
       const result = await odooClient.checkout({ ...payload, idempotency_key: key });
       const submittedAt = new Date().toISOString();
       const nextState = normalizeOrderState(state, session.user.id);
-      for (const brand of ORDER_BRANDS) {
+      for (const brand of ACTIVE_ORDER_BRANDS) {
         nextState.carts[brand].items = [];
         nextState.carts[brand].updatedAt = submittedAt;
       }
@@ -616,7 +617,7 @@ export function createRoraimaB2BService({
       if (odooMode()) return submitOdooOrder({ notes, reference });
       if (visualPreviewMode()) throw new Error("El envío de pedidos se habilitará al conectar el portal profesional.");
       if (cartItems().some((item) => !ODOO_ORDER_BRANDS.includes(item.brand))) {
-        throw new Error("JISCO y AKONI permanecen como selección visual hasta integrar sus referencias en el servidor de pedidos.");
+        throw new Error("JISCO permanece como selección visual hasta integrar sus referencias en el servidor de pedidos.");
       }
       if (!initialized) await initialize();
       if (!session?.user?.id) throw new Error("Se requiere una sesión Supabase activa.");
@@ -662,7 +663,7 @@ export function createRoraimaB2BService({
         }
         const submittedAt = new Date().toISOString();
         const nextState = normalizeOrderState(state, session.user.id);
-        for (const brand of ORDER_BRANDS) {
+        for (const brand of ACTIVE_ORDER_BRANDS) {
           nextState.carts[brand].items = [];
           nextState.carts[brand].updatedAt = submittedAt;
         }

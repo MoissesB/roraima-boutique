@@ -1,4 +1,4 @@
-import { ORDER_BRANDS, ODOO_ORDER_BRANDS } from "./order-core.mjs?v=20261123-fourbrands-1";
+import { ACTIVE_ORDER_BRANDS, ODOO_ORDER_BRANDS } from "./order-core.mjs?v=20261123-fourbrands-1";
 
 const BRAND_LABELS = {
   silhouette: "Silhouette",
@@ -72,7 +72,7 @@ function renderStock(item, ctx) {
 }
 
 function renderItems(state, view, ctx = { odoo: false }) {
-  const brands = view === "global" ? ORDER_BRANDS : [view];
+  const brands = view === "global" ? ACTIVE_ORDER_BRANDS : [view];
   const sections = brands.map((brand) => {
     const items = state.carts[brand]?.items || [];
     const total = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
@@ -175,7 +175,7 @@ function checkoutBlockers(snapshot) {
   const blockers = [];
   const byKey = snapshot.stock?.byKey || {};
   let stockMissing = false;
-  for (const brand of ORDER_BRANDS) {
+  for (const brand of ACTIVE_ORDER_BRANDS) {
     const items = snapshot.state.carts[brand]?.items || [];
     if (!ODOO_ORDER_BRANDS.includes(brand) && items.length) {
       blockers.push(`${BRAND_LABELS[brand]}: esta marca aún no está conectada al envío de Odoo; descarga el PDF de la selección.`);
@@ -192,7 +192,7 @@ function checkoutBlockers(snapshot) {
       else if (entry.available < Number(item.quantity || 0)) blockers.push(`${label}: solo hay ${entry.available} piezas.`);
     }
   }
-  if (!(snapshot.totals.global > 0)) blockers.push("Añade referencias desde los catálogos.");
+  if (!ACTIVE_ORDER_BRANDS.some((entry) => snapshot.totals[entry] > 0)) blockers.push("Añade referencias desde los catálogos.");
   if (stockMissing || snapshot.stock?.status === "loading") blockers.push("Esperando la consulta de existencias…");
   return blockers;
 }
@@ -347,7 +347,7 @@ export function mountOrderUI({
   host.dataset.roraimaB2bUi = inline ? "inline" : "drawer";
   const shadow = host.attachShadow({ mode: "open" });
   container.appendChild(host);
-  let view = ORDER_BRANDS.includes(brand) ? brand : "global";
+  let view = ACTIVE_ORDER_BRANDS.includes(brand) ? brand : "global";
   let open = inline;
   let latest = service.getSnapshot();
   const visualPreview = Boolean(service.isVisualPreview);
@@ -444,7 +444,7 @@ export function mountOrderUI({
   function render() {
     const focus = captureFocus();
     const optic = currentOptic(latest.state);
-    const total = latest.totals.global || 0;
+    const total = ACTIVE_ORDER_BRANDS.reduce((sum, entry) => sum + (latest.totals[entry] || 0), 0);
     const submitted = Boolean(latest.submission);
     const odoo = latest.mode === "odoo";
     if (odoo) prefillCustomer();
@@ -477,8 +477,8 @@ export function mountOrderUI({
           <p class="status" data-status="${escapeHtml(latest.status)}" aria-live="polite">${escapeHtml(statusText)}</p>
           ${odoo ? renderAccountBar(latest) : ""}
           <nav class="tabs" aria-label="Ver carrito">
-            <button type="button" data-view="global" aria-pressed="${view === "global"}">Todo (${latest.totals.global || 0})</button>
-            ${ORDER_BRANDS.map((entry) => `<button type="button" data-view="${entry}" aria-pressed="${view === entry}">${BRAND_LABELS[entry]} (${latest.totals[entry] || 0})</button>`).join("")}
+            <button type="button" data-view="global" aria-pressed="${view === "global"}">Todo (${total})</button>
+            ${ACTIVE_ORDER_BRANDS.map((entry) => `<button type="button" data-view="${entry}" aria-pressed="${view === entry}">${BRAND_LABELS[entry]} (${latest.totals[entry] || 0})</button>`).join("")}
           </nav>
           ${odoo ? renderRemoved(latest.removed) : ""}
           ${renderItems(latest.state, view, itemsContext)}
@@ -572,7 +572,7 @@ export function mountOrderUI({
       feedback.textContent = "Preparando PDF…";
       try {
         const { downloadVisualOrderPdf } = await import("./visual-order-pdf.mjs?v=20261123-fourbrands-1");
-        const items = ORDER_BRANDS.flatMap((entry) => latest.state.carts[entry]?.items || []);
+        const items = ACTIVE_ORDER_BRANDS.flatMap((entry) => latest.state.carts[entry]?.items || []);
         await downloadVisualOrderPdf({ items, customer: visualCustomer, signature: visualSignature });
         feedback.textContent = "PDF descargado. El pedido no se ha enviado a Roraima.";
       } catch (error) {

@@ -369,7 +369,7 @@ img { display: block; width: 100%; }
   right: 185px;
   bottom: 0;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   border-top: 1px solid rgba(255,255,255,.28);
   border-left: 1px solid rgba(255,255,255,.28);
   background: rgba(13,12,12,.58);

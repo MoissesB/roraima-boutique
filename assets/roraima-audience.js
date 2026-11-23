@@ -218,7 +218,7 @@
         if (label === "alfred kerbs") link.setAttribute("href", "/alfred-kerbs/");
         if (label === "silhouette") link.setAttribute("href", "/silhouette/");
       });
-      [["JISCO", "/jisco/"], ["AKONI", "/akoni/"]].forEach(function (brand) {
+      [["JISCO", "/jisco/"]].forEach(function (brand) {
         if (rail.querySelector('a[href="' + brand[1] + '"]')) return;
         var link = document.createElement("a");
         link.href = brand[1];

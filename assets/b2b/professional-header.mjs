@@ -214,7 +214,7 @@ function updateBrandRail(header) {
     if (label.includes("alfred")) topRoute(anchor, brandRoute("alfred-kerbs"));
     if (label.includes("silhouette")) topRoute(anchor, brandRoute("silhouette"));
   });
-  for (const [label, href] of [["JISCO", brandRoute("jisco")], ["AKONI", brandRoute("akoni")]]) {
+  for (const [label, href] of [["JISCO", brandRoute("jisco")]]) {
     if (rail.querySelector(`a[href="${href}"]`)) continue;
     const link = document.createElement("a");
     link.textContent = label;

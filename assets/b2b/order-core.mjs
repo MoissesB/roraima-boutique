@@ -1,6 +1,8 @@
 export const ORDER_SCHEMA_VERSION = 1;
 
 export const ORDER_BRANDS = Object.freeze(["silhouette", "alfred-kerbs", "jisco", "akoni"]);
+// AKONI drafts remain stored for reactivation, but are not part of the live order.
+export const ACTIVE_ORDER_BRANDS = Object.freeze(["silhouette", "alfred-kerbs", "jisco"]);
 export const ODOO_ORDER_BRANDS = Object.freeze(["silhouette", "alfred-kerbs"]);
 
 export const LEGACY_ORDER_SOURCES = Object.freeze([
@@ -151,7 +153,7 @@ function slugify(value) {
 export function buildOrderSubmission(state) {
   const normalized = normalizeOrderState(state);
   const optic = normalized.optics.find((entry) => entry.id === normalized.activeOpticId);
-  const items = ORDER_BRANDS.flatMap((brand) => normalized.carts[brand].items.map((item) => {
+  const items = ACTIVE_ORDER_BRANDS.flatMap((brand) => normalized.carts[brand].items.map((item) => {
     const fallbackIdentity = item.sku || item.productId || item.slug || item.key;
     return {
       brand: brand === "alfred-kerbs" ? "alfred_kerbs" : brand,

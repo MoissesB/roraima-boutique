@@ -30,7 +30,7 @@ jobs:
       - name: Preparar archivos públicos sin artículos programados
         run: |
           mkdir -p .site-artifact
-          rsync -a --include='frame-0000.jpg' --exclude='frame-*.jpg' --exclude='/.git/' --exclude='/.github/' --exclude='/content/' --exclude='/scripts/' --exclude='/silhouette/assets/local-blog-preview.js' --exclude='/.site-artifact/' ./ .site-artifact/
+          rsync -a --include='frame-0000.jpg' --exclude='frame-*.jpg' --exclude='/.git/' --exclude='/.github/' --exclude='/content/' --exclude='/scripts/' --exclude='/akoni/' --exclude='/profesionales/vista/akoni/' --exclude='/silhouette/assets/local-blog-preview.js' --exclude='/.site-artifact/' ./ .site-artifact/
           sed -i '/local-blog-preview.js/d' .site-artifact/silhouette/index.html
           node scripts/prepare-silhouette-pages-assets.mjs .site-artifact
       - name: Obtener catálogo JISCO aprobado
@@ -42,15 +42,7 @@ jobs:
           persist-credentials: false
       - name: Integrar JISCO solo en el artefacto Roraima
         run: node scripts/prepare-roraima-jisco.mjs .jisco-source/public .site-artifact/jisco
-      - name: Obtener catálogo AKONI aprobado
-        uses: actions/checkout@v4
-        with:
-          repository: MoissesB/innova-akoni-catalogo
-          ref: efb35180f7a93a0f323051a9eaec169b857642a0
-          path: .akoni-source
-          persist-credentials: false
-      - name: Integrar AKONI solo en el artefacto Roraima
-        run: node scripts/prepare-roraima-akoni.mjs .akoni-source/docs .site-artifact/akoni
+      # AKONI remains in the repository for a future relaunch, but is not built or published.
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
